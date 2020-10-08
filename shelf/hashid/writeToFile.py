@@ -1,7 +1,6 @@
-def writeToFile(input):
-    file = open('./output.txt', 'w')
-    file.write(input["content"])
+def write_to_file(json_input):
+    file = open('./shelf/output/output.txt', 'w')
+    file.write(json_input["content"])
     file.close()
-    
-    file = open('./output.txt','r')
-    return(file.read())
+    file = open('./shelf/output/output.txt', 'r')
+    return file.read()
