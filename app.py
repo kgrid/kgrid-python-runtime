@@ -4,7 +4,8 @@ from os import getenv, makedirs
 import requests
 import json
 from flask_script import Manager
-import sys
+import importlib
+import shelf
 
 artifacts = {}
 
@@ -35,14 +36,15 @@ def deployments():
     hash_key = hash(request.json['uri']).__abs__().__str__()
     hash_key = 'a' + hash_key
     artifact_path = 'shelf/' + hash_key + '/' + request.json['entry']
-    package_name = artifact_path.rsplit('/', 1)[0]
-    makedirs(package_name)
+    package_name = artifact_path.rsplit('.', 1)[0]
+    dir_name = artifact_path.rsplit('/', 1)[0]
+    makedirs(dir_name)
     with open(artifact_path, "wb") as handle:
         for data in artifact.iter_content():
             handle.write(data)
     # install any dependencies?
-    artifacts[hash_key] = {'path' : artifact_path.replace('/', '.'), 'function' : request.json['function']}
-    __import__(package_name.replace('/', '.'))
+    artifacts[hash_key] = {'path' : package_name.replace('/', '.'), 'function' : request.json['function']}
+    importlib.import_module(package_name.replace('/', '.'))
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
 
@@ -50,7 +52,7 @@ def deployments():
 @app.route("/<endpoint_key>", methods=['POST'])
 def execute_endpoint(endpoint_key):
     print(f"activator sent over json in execute request {request.json}")
-    result = exec("sys.modules[" + artifacts[endpoint_key]['path'] + "]." + artifacts[endpoint_key]['function'] + "(request.json)")
+    result = eval(artifacts[endpoint_key]['path'] + "." + artifacts[endpoint_key]['function'] + "(request.json)")
     return {'result': result}
 
 
