@@ -1,3 +1,5 @@
+import os
+import sys
 import threading
 from flask import Flask, request
 from os import getenv, makedirs
@@ -5,8 +7,11 @@ import requests
 import json
 from flask_script import Manager
 import importlib
+import shelf
+import time
+import subprocess
 
-artifacts = {}
+endpoints = {}
 
 app = Flask(__name__)
 activator_url = getenv("KGRID_ADAPTER_PROXY_URL", "http://localhost:8080")
@@ -14,6 +19,7 @@ python_runtime_url = getenv("ENVIRONMENT_SELF_URL", "http://localhost:5000")
 
 
 def setup_app():
+    time.sleep(3)
     print(f"Kgrid Activator URL is: {activator_url}")
     print(f"Python Runtime URL is: {python_runtime_url}")
     registration_body = {'type': 'python', 'url': python_runtime_url}
@@ -31,27 +37,47 @@ def info():
 @app.route("/deployments", methods=['POST'])
 def deployments():
     print(f"activator sent over json in activation request {request.json}")
-    artifact = requests.get(request.json['baseUrl'] + request.json['entry'], stream=True)
-    hash_key = hash(request.json['uri']).__abs__().__str__()
-    hash_key = 'ko' + hash_key
-    artifact_path = 'shelf/' + hash_key + '/' + request.json['entry']
-    package_name = artifact_path.rsplit('.', 1)[0].replace('/', '.')
-    dir_name = artifact_path.rsplit('/', 1)[0]
-    makedirs(dir_name)
-    with open(artifact_path, "wb") as handle:
-        for data in artifact.iter_content():
-            handle.write(data)
-    # install any dependencies?
-    artifacts[hash_key] = {'path': package_name, 'function': request.json['function']}
-    importlib.import_module(package_name)
+    hash_key = copy_artifacts_to_shelf()
+    entry_name = request.json['entry'].rsplit('.', 2)[0].replace('/', '.')
+    package_name = 'shelf.' + hash_key + '.' + entry_name
+    endpoints[hash_key] = {'path': package_name, 'function': request.json['function']}
+    import_package(hash_key, package_name)
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
+
+
+def import_package(hash_key, package_name):
+    print(f'installing dependencies for KO: {package_name}')
+    run_result = subprocess.check_call([
+        sys.executable,
+        '-m',
+        'pip',
+        'install',
+        '-r',
+        ('shelf/' + hash_key + '/requirements.txt')])
+    print(f'dependencies installed. result: {run_result}')
+    importlib.import_module(package_name)
+
+
+def copy_artifacts_to_shelf():
+    hash_key = request.json['uri'].replace('/', '_').replace('.', '_')
+    for artifact in request.json['artifact']:
+        artifact_path = 'shelf/' + hash_key + '/' + artifact
+        dir_name = artifact_path.rsplit('/', 1)[0]
+        if not os.path.isdir(dir_name):
+            makedirs(dir_name)
+        artifact_binary = requests.get(request.json['baseUrl'] + artifact, stream=True)
+        with open(artifact_path, "wb") as handle:
+            for data in artifact_binary.iter_content():
+                handle.write(data)
+
+    return hash_key
 
 
 @app.route("/<endpoint_key>", methods=['POST'])
 def execute_endpoint(endpoint_key):
     print(f"activator sent over json in execute request {request.json}")
-    result = eval(artifacts[endpoint_key]['path'] + "." + artifacts[endpoint_key]['function'] + "(request.json)")
+    result = eval(endpoints[endpoint_key]['path'] + "." + endpoints[endpoint_key]['function'] + "(request.json)")
     return {'result': result}
 
 
