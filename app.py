@@ -5,12 +5,11 @@ import requests
 import json
 from flask_script import Manager
 import importlib
-import shelf
 
 artifacts = {}
 
 app = Flask(__name__)
-activator_url = getenv("KGRID_ADAPTER_PROXY_URL", "http://localhost:8083")
+activator_url = getenv("KGRID_ADAPTER_PROXY_URL", "http://localhost:8080")
 python_runtime_url = getenv("ENVIRONMENT_SELF_URL", "http://localhost:5000")
 
 
