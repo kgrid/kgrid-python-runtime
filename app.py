@@ -34,17 +34,17 @@ def deployments():
     print(f"activator sent over json in activation request {request.json}")
     artifact = requests.get(request.json['baseUrl'] + request.json['entry'], stream=True)
     hash_key = hash(request.json['uri']).__abs__().__str__()
-    hash_key = 'a' + hash_key
+    hash_key = 'ko' + hash_key
     artifact_path = 'shelf/' + hash_key + '/' + request.json['entry']
-    package_name = artifact_path.rsplit('.', 1)[0]
+    package_name = artifact_path.rsplit('.', 1)[0].replace('/', '.')
     dir_name = artifact_path.rsplit('/', 1)[0]
     makedirs(dir_name)
     with open(artifact_path, "wb") as handle:
         for data in artifact.iter_content():
             handle.write(data)
     # install any dependencies?
-    artifacts[hash_key] = {'path' : package_name.replace('/', '.'), 'function' : request.json['function']}
-    importlib.import_module(package_name.replace('/', '.'))
+    artifacts[hash_key] = {'path': package_name, 'function': request.json['function']}
+    importlib.import_module(package_name)
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
 
