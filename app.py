@@ -1,7 +1,7 @@
 import os
 import sys
 import threading
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from os import getenv, makedirs
 import requests
 import json
@@ -13,11 +13,22 @@ import subprocess
 import traceback
 from werkzeug.exceptions import HTTPException
 
+
 endpoints = {}
 
 app = Flask(__name__)
 activator_url = getenv("KGRID_ADAPTER_PROXY_URL", "http://localhost:8080")
 python_runtime_url = getenv("ENVIRONMENT_SELF_URL", "http://localhost:5000")
+
+
+def setup_app():
+    time.sleep(3)
+    print(f"Kgrid Activator URL is: {activator_url}")
+    print(f"Python Runtime URL is: {python_runtime_url}")
+    registration_body = {'type': 'python', 'url': python_runtime_url}
+    requests.post(activator_url + "/proxy/environments", data=json.dumps(registration_body),
+                  headers={'Content-Type': "application/json"})
+    requests.get(activator_url + "/activate/python")
 
 
 @app.errorhandler(HTTPException)
@@ -34,25 +45,17 @@ def handle_httpexception(e):
     response.content_type = "application/json"
     return response
 
+
 @app.errorhandler(SyntaxError)
 def handle_syntaxerror(e):
-    resp = {"Error":str(e)}
+    resp = {"Error": str(e)}
     return resp, 400
+
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    resp = {"Exception":str(e)}
+    resp = {"Exception": str(e)}
     return resp, 400
-
-
-def setup_app():
-    time.sleep(3)
-    print(f"Kgrid Activator URL is: {activator_url}")
-    print(f"Python Runtime URL is: {python_runtime_url}")
-    registration_body = {'type': 'python', 'url': python_runtime_url}
-    requests.post(activator_url + "/proxy/environments", data=json.dumps(registration_body),
-                  headers={'Content-Type': "application/json"})
-    requests.get(activator_url + "/activate/python")
 
 
 @app.route("/info", methods=['GET'])
@@ -68,12 +71,22 @@ def deployments():
     entry_name = request.json['entry'].rsplit('.', 2)[0].replace('/', '.')
     package_name = 'shelf.' + hash_key + '.' + entry_name
     if package_name in sys.modules:
-        del(sys.modules[package_name])
+        del (sys.modules[package_name])
     import_package(hash_key, package_name)
     function = eval(package_name + "." + request.json['function'])
-    endpoints[hash_key] = {'uri': request.json['uri'], 'path': package_name, 'function': function }
+    endpoints[hash_key] = {'uri': request.json['uri'], 'path': package_name, 'function': function}
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
+
+
+@app.route("/endpoints", methods=['GET'])
+def endpoint_list():
+    writeable_endpoints = {}
+    for element in endpoints.items():
+        element_uri = element[1]['uri']
+        writeable_endpoints[element_uri] = element[1]
+        del writeable_endpoints[element_uri]['function']
+    return writeable_endpoints
 
 
 def import_package(hash_key, package_name):
