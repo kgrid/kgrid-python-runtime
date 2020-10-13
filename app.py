@@ -10,9 +10,7 @@ import importlib
 import shelf
 import time
 import subprocess
-import traceback
 from werkzeug.exceptions import HTTPException
-
 
 endpoints = {}
 
@@ -92,15 +90,13 @@ def endpoint_list():
 def import_package(hash_key, package_name):
     dependency_requirements = 'shelf/' + hash_key + '/requirements.txt'
     if os.path.exists(dependency_requirements):
-        print(f'installing dependencies for KO: {package_name}')
         run_result = subprocess.check_call([
             sys.executable,
             '-m',
             'pip',
             'install',
             '-r',
-            (dependency_requirements)])
-        print(f'dependencies installed. result: {run_result}')
+            dependency_requirements])
     importlib.import_module(package_name)
 
 
