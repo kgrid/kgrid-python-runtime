@@ -39,7 +39,7 @@ def copy_artifacts_to_shelf(activation_request):
     request_json = activation_request.json
     hash_key = request_json['uri'].replace('/', '_').replace('.', '_')
     for artifact in request_json['artifact']:
-        artifact_path = '~/shelf/' + hash_key + '/' + artifact
+        artifact_path = '../shelf/' + hash_key + '/' + artifact
         dir_name = artifact_path.rsplit('/', 1)[0]
         if not os.path.isdir(dir_name):
             makedirs(dir_name)
