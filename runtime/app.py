@@ -12,7 +12,7 @@ endpoints = {}
 
 app = Flask(__name__)
 app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
-activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8083')
+activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
 python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
 
 
