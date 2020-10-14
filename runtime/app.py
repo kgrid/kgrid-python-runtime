@@ -6,7 +6,6 @@ import json
 from flask_script import Manager
 import time
 from werkzeug.exceptions import HTTPException
-import shelf  # must be imported to activate and execute KOs
 from runtime.activation_utils import activate_endpoint
 
 endpoints = {}
@@ -34,7 +33,7 @@ def info():
 
 @app.route('/deployments', methods=['POST'])
 def deployments():
-    return activate_endpoint(request)
+    return activate_endpoint(request, python_runtime_url, endpoints)
 
 
 @app.route('/endpoints', methods=['GET'])

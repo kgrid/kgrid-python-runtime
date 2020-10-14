@@ -3,7 +3,7 @@ import sys
 from os import getenv, makedirs
 import importlib
 import subprocess
-
+import shelf  # must be imported to activate and execute KOs
 import requests
 
 
@@ -16,7 +16,7 @@ def activate_endpoint(activation_request, python_runtime_url, endpoints):
     if package_name in sys.modules:
         del (sys.modules[package_name])
     import_package(hash_key, package_name)
-    function = eval(package_name + '.' + request_json['function'])
+    function = eval(f'{package_name}.{request_json["function"]}')
     endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function}
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
@@ -39,7 +39,7 @@ def copy_artifacts_to_shelf(activation_request):
     request_json = activation_request.json
     hash_key = request_json['uri'].replace('/', '_').replace('.', '_')
     for artifact in request_json['artifact']:
-        artifact_path = 'shelf/' + hash_key + '/' + artifact
+        artifact_path = '~/shelf/' + hash_key + '/' + artifact
         dir_name = artifact_path.rsplit('/', 1)[0]
         if not os.path.isdir(dir_name):
             makedirs(dir_name)
