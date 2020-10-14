@@ -6,13 +6,14 @@ import json
 from flask_script import Manager
 import time
 from werkzeug.exceptions import HTTPException
-from runtime.activation_utils import activate_endpoint
+from activation_utils import activate_endpoint
 
 endpoints = {}
 
 app = Flask(__name__)
-activator_url = getenv('KGRID_ADAPTER_PROXY_URL', 'http://localhost:8080')
-python_runtime_url = getenv('ENVIRONMENT_SELF_URL', 'http://localhost:5000')
+app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
+activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8083')
+python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
 
 
 def setup_app():
@@ -20,9 +21,12 @@ def setup_app():
     print(f'Kgrid Activator URL is: {activator_url}')
     print(f'Python Runtime URL is: {python_runtime_url}')
     registration_body = {'type': 'python', 'url': python_runtime_url}
-    requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
-                  headers={'Content-Type': 'application/json'})
-    requests.get(activator_url + '/activate/python')
+    try:
+        requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
+                      headers={'Content-Type': 'application/json'})
+        requests.get(activator_url + '/activate/python')
+    except requests.ConnectionError as err :
+        print(f'Could not connect to remote activator at {activator_url} Error: {err}')
 
 
 @app.route('/info', methods=['GET'])
@@ -84,7 +88,7 @@ manager = Manager(app)
 def runserver():
     thread = threading.Thread(target=setup_app)
     thread.start()
-    app.run()
+    app.run(port=app_port)
 
 
 if __name__ == '__main__':

@@ -31,8 +31,8 @@ class Tests(unittest.TestCase):
         self.app = app.test_client()
 
     def tearDown(self):
-        if os.path.exists(f'../shelf/{naan}_{name}_{version}_{endpoint}'):
-            shutil.rmtree(f'../shelf/{naan}_{name}_{version}_{endpoint}')
+        if os.path.exists(f'shelf/{naan}_{name}_{version}_{endpoint}'):
+            shutil.rmtree(f'shelf/{naan}_{name}_{version}_{endpoint}')
 
     def test_info(self):
         response = self.app.get('/info')

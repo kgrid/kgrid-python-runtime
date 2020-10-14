@@ -1,6 +1,6 @@
 import os
 import sys
-from os import getenv, makedirs
+from os import makedirs
 import importlib
 import subprocess
 import shelf  # must be imported to activate and execute KOs
