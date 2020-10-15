@@ -27,7 +27,7 @@ def activate_endpoint(activation_request, python_runtime_url, endpoints):
 
 
 def import_package(hash_key, package_name):
-    dependency_requirements = 'runtime/shelf/' + hash_key + '/requirements.txt'
+    dependency_requirements = 'shelf/' + hash_key + '/requirements.txt'
     if os.path.exists(dependency_requirements):
         subprocess.check_call([
             sys.executable,
