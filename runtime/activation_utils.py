@@ -14,13 +14,10 @@ def activate_endpoint(activation_request, python_runtime_url, endpoints):
     hash_key = copy_artifacts_to_shelf(activation_request)
     entry_name = request_json['entry'].rsplit('.', 2)[0].replace('/', '.')
     package_name = 'shelf.' + hash_key + '.' + entry_name
-    to_reload = []
     if package_name in sys.modules:
-        for module in sys.modules:
+        for module in list(sys.modules):
             if module.startswith('shelf.' + hash_key):
-                to_reload.append(module)
-        for reload_module in to_reload:
-            importlib.reload(sys.modules[reload_module])
+                importlib.reload(sys.modules[module])
     else:
         import_package(hash_key, package_name)
     function = eval(f'{package_name}.{request_json["function"]}')

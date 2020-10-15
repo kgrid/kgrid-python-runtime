@@ -71,12 +71,14 @@ def handle_http_exception(e):
 
 @app.errorhandler(SyntaxError)
 def handle_syntax_error(e):
+    print('Error:' + str(e))
     resp = {'Error': str(e)}
     return resp, 400
 
 
 @app.errorhandler(Exception)
 def handle_exception(e):
+    print('Exception:' + str(e))
     resp = {'Exception': str(e)}
     return resp, 400
 

@@ -2,7 +2,7 @@
 KGrid runtime for Knowledge Objects in python
 
 Getting started:
-- Install Python 3.8 or higher
+- Install [Python 3.8](https://www.python.org/downloads/) or higher
 - Install pip
 - Download Kgrid Python Runtime from github
 - Navigate to the folder containing `app.py`
