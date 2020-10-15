@@ -6,7 +6,7 @@ import json
 from flask_script import Manager
 import time
 from werkzeug.exceptions import HTTPException
-from activation_utils import activate_endpoint
+from .activation_utils import activate_endpoint
 
 endpoints = {}
 
@@ -25,7 +25,7 @@ def setup_app():
         requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
                       headers={'Content-Type': 'application/json'})
         requests.get(activator_url + '/activate/python')
-    except requests.ConnectionError as err :
+    except requests.ConnectionError as err:
         print(f'Could not connect to remote activator at {activator_url} Error: {err}')
 
 
@@ -71,14 +71,14 @@ def handle_http_exception(e):
 
 @app.errorhandler(SyntaxError)
 def handle_syntax_error(e):
-    print('Error:' + str(e))
+    print('Error: ' + str(e))
     resp = {'Error': str(e)}
     return resp, 400
 
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    print('Exception:' + str(e))
+    print('Exception: ' + str(e))
     resp = {'Exception': str(e)}
     return resp, 400
 
