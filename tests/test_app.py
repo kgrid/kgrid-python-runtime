@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import MagicMock, patch
 import requests
-import runtime.app as app
+import kgrid_python_runtime.app as app
 
 activator_url = 'http://localhost:8080'
 python_runtime_url = 'http://localhost:5000'

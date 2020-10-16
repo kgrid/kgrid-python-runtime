@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="kgrid-python-runtime-kgrid-developers",
+    name="kgrid-python-runtime",
     version="0.0.1",
     author="Kgrid Developers",
     author_email="kgrid-developers@umich.edu",
@@ -12,13 +12,14 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kgrid/kgrid-python-runtime",
-    packages=setuptools.find_packages(),
+    packages=[
+        'kgrid_python_runtime'
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
         "Framework :: Flask",
-        "Intended Audience :: Healthcare Industry :: Science/Research",
         "Natural Language :: English",
         "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],

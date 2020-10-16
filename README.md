@@ -11,7 +11,7 @@ Getting started:
     `pip install -r requirements.txt`
 - To start the Python runtime:
 
-    `python runtime/app.py runserver`
+    `python kgrid_python_runtime/app.py runserver`
     
 - The runtime starts on port 5000, but can be specified with `KGRID_PYTHON_ENV_URL`
 - By default, the python runtime points to a Kgrid activator at url: 

@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 import responses
-from runtime.app import app
+from kgrid_python_runtime.app import app
 
 naan = 'naan'
 name = 'name'
