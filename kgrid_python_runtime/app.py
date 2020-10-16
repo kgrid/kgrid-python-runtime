@@ -1,4 +1,5 @@
 from os import getenv, makedirs, path
+import os
 import threading
 from flask import Flask, request
 import json
@@ -27,11 +28,17 @@ def setup_app():
     print(f'Python Runtime URL is: {python_runtime_url}')
     registration_body = {'type': 'python', 'url': python_runtime_url}
     try:
-        requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
-                      headers={'Content-Type': 'application/json'})
-        requests.get(activator_url + '/activate/python')
+        response = requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
+                                 headers={'Content-Type': 'application/json'})
+        if response.status_code != 200:
+            print(f'Could not register this runtime at the url {activator_url} '
+                  f'Check that the activator is running at that address.')
+            os._exit(-1)
+        else:
+            requests.get(activator_url + '/activate/python')
     except requests.ConnectionError as err:
         print(f'Could not connect to remote activator at {activator_url} Error: {err}')
+        os._exit(-1)
 
 
 @app.route('/info', methods=['GET'])
