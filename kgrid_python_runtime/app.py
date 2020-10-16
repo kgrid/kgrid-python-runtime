@@ -9,7 +9,7 @@ import shutil
 import sys
 import importlib
 import subprocess
-import shelf  # must be imported to activate and execute KOs
+import pyshelf  # must be imported to activate and execute KOs
 import requests
 
 endpoints = {}
@@ -18,6 +18,7 @@ app = Flask(__name__)
 app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
 activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
 python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
+pyshelf_folder = 'pyshelf/'
 
 
 def setup_app():
@@ -92,10 +93,10 @@ def activate_endpoint(activation_request, python_runtime_url, endpoints):
     print(f'activator sent over json in activation request {request_json}')
     hash_key = copy_artifacts_to_shelf(activation_request)
     entry_name = request_json['entry'].rsplit('.', 2)[0].replace('/', '.')
-    package_name = 'shelf.' + hash_key + '.' + entry_name
+    package_name = 'pyshelf.' + hash_key + '.' + entry_name
     if package_name in sys.modules:
         for module in list(sys.modules):
-            if module.startswith('shelf.' + hash_key):
+            if module.startswith('pyshelf.' + hash_key):
                 importlib.reload(sys.modules[module])
     else:
         import_package(hash_key, package_name)
@@ -106,7 +107,7 @@ def activate_endpoint(activation_request, python_runtime_url, endpoints):
 
 
 def import_package(hash_key, package_name):
-    dependency_requirements = 'shelf/' + hash_key + '/requirements.txt'
+    dependency_requirements = pyshelf_folder + hash_key + '/requirements.txt'
     if path.exists(dependency_requirements):
         subprocess.check_call([
             sys.executable,
@@ -121,10 +122,11 @@ def import_package(hash_key, package_name):
 def copy_artifacts_to_shelf(activation_request):
     request_json = activation_request.json
     hash_key = request_json['uri'].replace('/', '_').replace('.', '_')
-    if path.exists('shelf/' + hash_key):
-        shutil.rmtree('shelf/' + hash_key)
+
+    if path.exists(pyshelf_folder + hash_key):
+        shutil.rmtree(pyshelf_folder + hash_key)
     for artifact in request_json['artifact']:
-        artifact_path = 'shelf/' + hash_key + '/' + artifact
+        artifact_path = pyshelf_folder + hash_key + '/' + artifact
         dir_name = artifact_path.rsplit('/', 1)[0]
         if not path.isdir(dir_name):
             makedirs(dir_name)
