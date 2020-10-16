@@ -1,12 +1,16 @@
-from os import getenv
+from os import getenv, makedirs, path
 import threading
 from flask import Flask, request
-import requests
 import json
 from flask_script import Manager
 import time
 from werkzeug.exceptions import HTTPException
-from .activation_utils import activate_endpoint
+import shutil
+import sys
+import importlib
+import subprocess
+import shelf  # must be imported to activate and execute KOs
+import requests
 
 endpoints = {}
 
@@ -81,6 +85,55 @@ def handle_exception(e):
     print('Exception: ' + str(e))
     resp = {'Exception': str(e)}
     return resp, 400
+
+
+def activate_endpoint(activation_request, python_runtime_url, endpoints):
+    request_json = activation_request.json
+    print(f'activator sent over json in activation request {request_json}')
+    hash_key = copy_artifacts_to_shelf(activation_request)
+    entry_name = request_json['entry'].rsplit('.', 2)[0].replace('/', '.')
+    package_name = 'shelf.' + hash_key + '.' + entry_name
+    if package_name in sys.modules:
+        for module in list(sys.modules):
+            if module.startswith('shelf.' + hash_key):
+                importlib.reload(sys.modules[module])
+    else:
+        import_package(hash_key, package_name)
+    function = eval(f'{package_name}.{request_json["function"]}')
+    endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function}
+    response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
+    return response
+
+
+def import_package(hash_key, package_name):
+    dependency_requirements = 'shelf/' + hash_key + '/requirements.txt'
+    if path.exists(dependency_requirements):
+        subprocess.check_call([
+            sys.executable,
+            '-m',
+            'pip',
+            'install',
+            '-r',
+            dependency_requirements])
+    importlib.import_module(package_name)
+
+
+def copy_artifacts_to_shelf(activation_request):
+    request_json = activation_request.json
+    hash_key = request_json['uri'].replace('/', '_').replace('.', '_')
+    if path.exists('shelf/' + hash_key):
+        shutil.rmtree('shelf/' + hash_key)
+    for artifact in request_json['artifact']:
+        artifact_path = 'shelf/' + hash_key + '/' + artifact
+        dir_name = artifact_path.rsplit('/', 1)[0]
+        if not path.isdir(dir_name):
+            makedirs(dir_name)
+        artifact_binary = requests.get(request_json['baseUrl'] + artifact, stream=True)
+        with open(artifact_path, 'wb') as handle:
+            for data in artifact_binary.iter_content():
+                handle.write(data)
+
+    return hash_key
 
 
 manager = Manager(app)
