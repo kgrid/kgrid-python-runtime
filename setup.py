@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="kgrid-python-runtime",
-    version="0.0.1",
+    version="0.0.3",
     author="Kgrid Developers",
     author_email="kgrid-developers@umich.edu",
     description="A runtime for python-based Knowledge Objects",
