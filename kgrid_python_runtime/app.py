@@ -12,6 +12,9 @@ import importlib
 import subprocess
 import pyshelf  # must be imported to activate and execute KOs
 import requests
+import pkg_resources
+
+version = pkg_resources.require("kgrid-python-runtime")[0].version
 
 endpoints = {}
 
@@ -41,10 +44,24 @@ def setup_app():
         os._exit(-1)
 
 
+@app.route('/', methods=['GET'])
+def root():
+    return {
+        'Name': 'Kgrid Python Runtime',
+        'Description': 'Running Knowledge Objects written in Python',
+        'Version': version,
+        'Info': f'http://localhost:{app_port}/info',
+        'Endpoints': f'http://localhost:{app_port}/endpoints'
+    }
+
+
 @app.route('/info', methods=['GET'])
 def info():
-    info_up = {'Status': 'Up'}
-    return info_up
+    return {
+        'Status': 'Up',
+        'Activator': activator_url,
+        'Python Runtime': python_runtime_url
+    }
 
 
 @app.route('/deployments', methods=['POST'])
