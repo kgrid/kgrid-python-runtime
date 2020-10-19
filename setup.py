@@ -24,4 +24,5 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],
     python_requires='>=3.8',
+    install_requires=['flask', 'Flask-Script', 'werkzeug', 'requests', 'responses']
 )
