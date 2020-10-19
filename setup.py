@@ -17,7 +17,7 @@ class CustomInstallCommand(install):
 setuptools.setup(
     cmdclass={'install': CustomInstallCommand},
     name="kgrid-python-runtime",
-    version="0.0.5",
+    version="0.0.6",
     author="Kgrid Developers",
     author_email="kgrid-developers@umich.edu",
     description="A runtime for python-based Knowledge Objects",
