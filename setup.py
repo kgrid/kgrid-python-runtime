@@ -1,23 +1,12 @@
 import setuptools
-from setuptools.command.install import install
-import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-class CustomInstallCommand(install):
-    def run(self):
-        print('Creating shelf directory')
-        if not os.path.exists('pyshelf'):
-            os.mkdir('pyshelf')
-        install.run(self)
-
-
 setuptools.setup(
-    cmdclass={'install': CustomInstallCommand},
     name="kgrid-python-runtime",
-    version="0.0.7",
+    version="0.0.8",
     author="Kgrid Developers",
     author_email="kgrid-developers@umich.edu",
     description="A runtime for python-based Knowledge Objects",
