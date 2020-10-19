@@ -8,8 +8,8 @@ with open("README.md", "r") as fh:
 
 class CustomInstallCommand(install):
     def run(self):
+        print('Creating shelf directory')
         if not os.path.exists('pyshelf'):
-            print('Creating shelf directory')
             os.mkdir('pyshelf')
         install.run(self)
 
@@ -17,7 +17,7 @@ class CustomInstallCommand(install):
 setuptools.setup(
     cmdclass={'install': CustomInstallCommand},
     name="kgrid-python-runtime",
-    version="0.0.6",
+    version="0.0.7",
     author="Kgrid Developers",
     author_email="kgrid-developers@umich.edu",
     description="A runtime for python-based Knowledge Objects",
