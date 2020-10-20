@@ -8,9 +8,11 @@ KGrid runtime for Knowledge Objects in python
 - Run `python -m pip install kgrid-python-runtime` to download the latest package
 - Create a directory called `pyshelf` in the directory the runtime will be running from.
 - To start the server run `python -m kgrid_python_runtime`
-- The runtime starts on port 5000, but can be specified with `KGRID_PYTHON_ENV_URL`
+- If this runtime will not be running locally, you must specify the address with `KGRID_PYTHON_ENV_URL`. 
+This will be the address given to the Kgrid Activator upon activation.
+- The runtime starts on port 5000, but can be specified with `KGRID_PYTHON_ENV_PORT`
 - By default, the python runtime points to a Kgrid activator at url: 
-    `http://localhost:8080`
+    `http://localhost:8080`.
     
     This can be customized by setting the environment variable:
     `KGRID_PROXY_ADAPTER_URL`
