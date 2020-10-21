@@ -30,7 +30,7 @@ def get_pyshelf_dir():
     if 'TEST_SHELF_PARENT' in app.config:
         return f'{app.config["TEST_SHELF_PARENT"]}pyshelf/'
     else:
-        return '../pyshelf/'
+        return 'pyshelf/'
 
 
 def setup_app():
