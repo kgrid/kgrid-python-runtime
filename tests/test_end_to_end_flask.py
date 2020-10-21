@@ -8,9 +8,10 @@ naan = 'naan'
 name = 'name'
 version = 'version'
 endpoint = 'endpoint'
-activator_url = 'http://activator-url:1337'
+activator_url = 'http://localhost:8080'
 python_runtime_url = 'http://localhost:5000'
 proxy_env_endpoint = '/proxy/environments'
+
 
 payload_return_value = b'def welcome(json_input):\n    return f\'Welcome to the Knowledge Grid, {json_input["name"]}\''
 flask_request_json = {
@@ -28,6 +29,9 @@ class Tests(unittest.TestCase):
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
         app.config['DEBUG'] = False
+        app.config['TEST_SHELF_PARENT'] = ""
+        responses.add(responses.GET, f'{activator_url}{proxy_env_endpoint}',
+                      body={"registered"}, status=200)
         self.app = app.test_client()
 
     def tearDown(self):
@@ -37,7 +41,8 @@ class Tests(unittest.TestCase):
     def test_info(self):
         response = self.app.get('/info')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, b'{"Status":"Up"}\n')
+        self.assertEqual(response.data, b'{"Activator":"http://localhost:8080",'
+                                        b'"Python Runtime":"http://localhost:5000","Status":"Up"}\n')
 
     @responses.activate
     def test_activate(self):

@@ -2,27 +2,35 @@ from os import getenv, makedirs, path
 import os
 import threading
 from flask import Flask, request
-import json
 from flask_script import Manager
+import json
 import time
 from werkzeug.exceptions import HTTPException
 import shutil
 import sys
 import importlib
 import subprocess
-import pyshelf  # must be imported to activate and execute KOs
 import requests
 import pkg_resources
+import pyshelf  # must be imported to activate and execute KOs
+from kgrid_python_runtime.context import Context
 
 version = pkg_resources.require("kgrid-python-runtime")[0].version
 
-endpoints = {}
+
+endpoint_context = Context()
 
 app = Flask(__name__)
 app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
 activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
 python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
-pyshelf_folder = 'pyshelf/'
+
+
+def get_pyshelf_dir():
+    if 'TEST_SHELF_PARENT' in app.config:
+        return f'{app.config["TEST_SHELF_PARENT"]}pyshelf/'
+    else:
+        return '../pyshelf/'
 
 
 def setup_app():
@@ -66,14 +74,14 @@ def info():
 
 @app.route('/deployments', methods=['POST'])
 def deployments():
-    return activate_endpoint(request, python_runtime_url, endpoints)
+    return activate_endpoint(request)
 
 
 @app.route('/endpoints', methods=['GET'])
 def endpoint_list():
     writeable_endpoints = {}
-    for element in endpoints.items():
-        element_uri = element[1]['uri']
+    for element in endpoint_context.endpoints.items():
+        element_uri = endpoint_context.hash_uri(element[1]['uri'])
         writeable_endpoints[element_uri] = element[1]
         del writeable_endpoints[element_uri]['function']
     return writeable_endpoints
@@ -82,7 +90,8 @@ def endpoint_list():
 @app.route('/<endpoint_key>', methods=['POST'])
 def execute_endpoint(endpoint_key):
     print(f'activator sent over json in execute request {request.json}')
-    result = endpoints[endpoint_key]['function'](request.json)
+    result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
+    endpoint_context.get_executor_by_id(endpoint_key)
     return {'result': result}
 
 
@@ -112,7 +121,7 @@ def handle_exception(e):
     return resp, 400
 
 
-def activate_endpoint(activation_request, python_runtime_url, endpoints):
+def activate_endpoint(activation_request):
     request_json = activation_request.json
     print(f'activator sent over json in activation request {request_json}')
     hash_key = copy_artifacts_to_shelf(activation_request)
@@ -125,13 +134,13 @@ def activate_endpoint(activation_request, python_runtime_url, endpoints):
     else:
         import_package(hash_key, package_name)
     function = eval(f'{package_name}.{request_json["function"]}')
-    endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function}
+    endpoint_context.endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function, 'entry': entry_name}
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
 
 
 def import_package(hash_key, package_name):
-    dependency_requirements = pyshelf_folder + hash_key + '/requirements.txt'
+    dependency_requirements = get_pyshelf_dir() + hash_key + '/requirements.txt'
     if path.exists(dependency_requirements):
         subprocess.check_call([
             sys.executable,
@@ -144,8 +153,9 @@ def import_package(hash_key, package_name):
 
 
 def copy_artifacts_to_shelf(activation_request):
+    pyshelf_folder = get_pyshelf_dir()
     request_json = activation_request.json
-    hash_key = request_json['uri'].replace('/', '_').replace('.', '_')
+    hash_key = endpoint_context.hash_uri(request_json['uri'])
 
     if path.exists(pyshelf_folder + hash_key):
         shutil.rmtree(pyshelf_folder + hash_key)
