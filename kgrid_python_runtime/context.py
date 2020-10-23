@@ -14,4 +14,4 @@ class Context:
         return self.endpoints[self.hash_uri(uri)]
 
     def hash_uri(self, uri):
-        return uri.replace('/', '_').replace('.', '_')
+        return uri.replace('/', '_').replace('.', '_').replace('-', '_')

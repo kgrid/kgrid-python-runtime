@@ -80,9 +80,10 @@ def deployments():
 @app.route('/endpoints', methods=['GET'])
 def endpoint_list():
     writeable_endpoints = {}
-    for element in endpoint_context.endpoints.items():
+    endpoints = endpoint_context.endpoints.items()
+    for element in endpoints:
         element_uri = endpoint_context.hash_uri(element[1]['uri'])
-        writeable_endpoints[element_uri] = element[1]
+        writeable_endpoints[element_uri] = dict(element[1])
         del writeable_endpoints[element_uri]['function']
     return writeable_endpoints
 
