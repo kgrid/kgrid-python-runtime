@@ -1,1 +1,1 @@
-ps:scale web=1
+web: python kgrid_python_runtime/app.py runserver
