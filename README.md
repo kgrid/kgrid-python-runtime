@@ -2,7 +2,7 @@
 KGrid runtime for Knowledge Objects in python
 
 
-##Getting started:
+## Getting started:
 - Install [Python 3.8](https://www.python.org/downloads/) or higher
 - Install pip
 - Run `python -m pip install kgrid-python-runtime` to download the latest package
@@ -21,7 +21,7 @@ This will be the address given to the Kgrid Activator upon activation.
     If you're starting the runtime at a different address, that url must be specified by setting the environment variable:
     `KGRID_PYTHON_ENV_URL`
     
-##To run the tests:
+## To run the tests:
 `python -m unittest discover -s tests`
     
 ##Creating a python Knowledge-Object:
