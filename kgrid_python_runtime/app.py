@@ -17,11 +17,13 @@ from kgrid_python_runtime.context import Context
 
 version = pkg_resources.require("kgrid-python-runtime")[0].version
 
-
 endpoint_context = Context()
 
 app = Flask(__name__)
+
 app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
+if getenv('PORT') is not None:
+    app_port = int(getenv('PORT'))
 activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
 python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
 
@@ -135,7 +137,8 @@ def activate_endpoint(activation_request):
     else:
         import_package(hash_key, package_name)
     function = eval(f'{package_name}.{request_json["function"]}')
-    endpoint_context.endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function, 'entry': entry_name}
+    endpoint_context.endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function,
+                                            'entry': entry_name}
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
 
