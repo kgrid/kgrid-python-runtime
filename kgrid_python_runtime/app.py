@@ -92,9 +92,13 @@ def endpoint_list():
 
 @app.route('/<endpoint_key>', methods=['POST'])
 def execute_endpoint(endpoint_key):
-    print(f'activator sent over json in execute request {request.json}')
-    result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
-    endpoint_context.get_executor_by_id(endpoint_key)
+    data = request.get_data()
+    print(f'activator sent over data in execute request {data}')
+    if request.content_type == 'application/json':
+        result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
+    else:
+        result = endpoint_context.endpoints[endpoint_key]['function'](data.decode("UTF-8"))
+    # endpoint_context.get_executor_by_id(endpoint_key)
     return {'result': result}
 
 
