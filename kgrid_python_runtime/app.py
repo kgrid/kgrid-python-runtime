@@ -187,7 +187,7 @@ manager = Manager(app)
 def runserver():
     thread = threading.Thread(target=setup_app)
     thread.start()
-    app.run(port=app_port)
+    app.run(port=app_port, host='0.0.0.0')
 
 
 if __name__ == '__main__':
