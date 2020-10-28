@@ -120,6 +120,7 @@ def activate_endpoint(activation_request):
                 importlib.reload(sys.modules[module])
     else:
         import_package(hash_key, package_name)
+
     function = eval(f'{package_name}.{request_json["function"]}')
     endpoint_context.endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function,
                                             'entry': entry_name}
@@ -137,8 +138,11 @@ def import_package(hash_key, package_name):
             'install',
             '-r',
             dependency_requirements])
-
-    importlib.import_module(package_name)
+    try:
+        importlib.import_module(package_name)
+    except Exception as e:
+        shutil.rmtree(f'{get_pyshelf_dir()}/{hash_key}')
+        raise SyntaxError(f'Error importing package: {package_name} in python runtime. Error: {e.msg}')
 
 
 def copy_artifacts_to_shelf(activation_request):
