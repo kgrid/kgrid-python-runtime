@@ -1,26 +1,26 @@
 from os import getenv, makedirs, path
 import os
-import threading
-from flask import Flask, request
-from flask_script import Manager
 import json
+import threading
 import time
-from werkzeug.exceptions import HTTPException
 import shutil
 import sys
 import importlib
 import subprocess
 import requests
 import pkg_resources
+from flask import Flask, request
+from flask_script import Manager
 import pyshelf  # must be imported to activate and execute KOs
 from kgrid_python_runtime.context import Context
+from kgrid_python_runtime.exceptions import error_handlers
 
 version = pkg_resources.require("kgrid-python-runtime")[0].version
 
 endpoint_context = Context()
 
 app = Flask(__name__)
-
+app.register_blueprint(error_handlers)
 app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
 if getenv('PORT') is not None:
     app_port = int(getenv('PORT'))
@@ -95,36 +95,17 @@ def execute_endpoint(endpoint_key):
     data = request.get_data()
     print(f'activator sent over data in execute request {data}')
     if request.content_type == 'application/json':
-        result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
+        try:
+            result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
+        except KeyError as e:
+            raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
     else:
-        result = endpoint_context.endpoints[endpoint_key]['function'](data.decode("UTF-8"))
+        try:
+            result = endpoint_context.endpoints[endpoint_key]['function'](data.decode("UTF-8"))
+        except KeyError as e:
+            raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
+
     return {'result': result}
-
-
-@app.errorhandler(HTTPException)
-def handle_http_exception(e):
-    response = e.get_response()
-    response.data = json.dumps({
-        'code': e.code,
-        'name': e.name,
-        'description': e.description,
-    })
-    response.content_type = 'application/json'
-    return response
-
-
-@app.errorhandler(SyntaxError)
-def handle_syntax_error(e):
-    print('Error: ' + str(e))
-    resp = {'Error': str(e)}
-    return resp, 400
-
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    print('Exception: ' + str(e))
-    resp = {'Exception': str(e)}
-    return resp, 400
 
 
 def activate_endpoint(activation_request):
@@ -156,6 +137,7 @@ def import_package(hash_key, package_name):
             'install',
             '-r',
             dependency_requirements])
+
     importlib.import_module(package_name)
 
 
