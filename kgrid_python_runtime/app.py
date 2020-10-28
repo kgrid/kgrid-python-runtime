@@ -98,7 +98,6 @@ def execute_endpoint(endpoint_key):
         result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
     else:
         result = endpoint_context.endpoints[endpoint_key]['function'](data.decode("UTF-8"))
-    # endpoint_context.get_executor_by_id(endpoint_key)
     return {'result': result}
 
 
