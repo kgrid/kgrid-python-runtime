@@ -3,8 +3,11 @@ class Context:
 
     def get_executor_by_id(self, uri):
         hash_key = self.hash_uri(uri)
-        endpoint = self.endpoints[hash_key]
-        return endpoint['function']
+        if hash_key in self.endpoints:
+            endpoint = self.endpoints[hash_key]
+            return endpoint['function']
+        else:
+            raise Exception(f'Cannot find object {uri} in loaded objects.')
 
     def get_executor_by_hash(self, hash):
         endpoint = self.endpoints[hash]
