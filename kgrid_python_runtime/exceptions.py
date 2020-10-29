@@ -3,7 +3,7 @@ import werkzeug.exceptions as exceptions
 import flask
 
 error_handlers = flask.Blueprint('exceptions', __name__)
-exception_prefix = 'Exception in python runtime: '
+exception_prefix = 'Exception in python runtime'
 
 
 @error_handlers.app_errorhandler(exceptions.HTTPException)
@@ -21,8 +21,8 @@ def handle_http_exception(e):
 
 @error_handlers.app_errorhandler(SyntaxError)
 def handle_syntax_error(e):
-    print('Syntax Error: ' + str(e))
-    return build_response(e, 500)
+    print('Syntax Error: ' + e.msg)
+    return build_response(e, 400)
 
 
 @error_handlers.app_errorhandler(Exception)
@@ -38,5 +38,9 @@ def handle_key_error(e):
 
 
 def build_response(e, code):
-    resp = {exception_prefix: str(e)}
+    resp = {
+        'code': code,
+        'name': type(e).__name__,
+        'description': str(e),
+    }
     return resp, code

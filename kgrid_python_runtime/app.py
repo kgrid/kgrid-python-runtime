@@ -140,9 +140,10 @@ def import_package(hash_key, package_name):
             dependency_requirements])
     try:
         importlib.import_module(package_name)
-    except Exception as e:
+    except SyntaxError as e:
         shutil.rmtree(f'{get_pyshelf_dir()}/{hash_key}')
-        raise SyntaxError(f'Error importing package: {package_name} in python runtime. Error: {e.msg}')
+        e.msg = f'Error importing package: {package_name} in python runtime. {e.msg}'
+        raise e
 
 
 def copy_artifacts_to_shelf(activation_request):
