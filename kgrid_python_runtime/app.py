@@ -9,7 +9,7 @@ import importlib
 import subprocess
 import requests
 import pkg_resources
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_script import Manager
 import pyshelf  # must be imported to activate and execute KOs
 from kgrid_python_runtime.context import Context
@@ -81,13 +81,13 @@ def deployments():
 
 @app.route('/endpoints', methods=['GET'])
 def endpoint_list():
-    writeable_endpoints = {}
+    writeable_endpoints = []
     endpoints = endpoint_context.endpoints.items()
     for element in endpoints:
-        element_uri = endpoint_context.hash_uri(element[1]['uri'])
-        writeable_endpoints[element_uri] = dict(element[1])
-        del writeable_endpoints[element_uri]['function']
-    return writeable_endpoints
+        endpoint = dict(element[1])
+        del endpoint['function']
+        writeable_endpoints.append(endpoint)
+    return jsonify(writeable_endpoints)
 
 
 @app.route('/<endpoint_key>', methods=['POST'])
@@ -122,8 +122,8 @@ def activate_endpoint(activation_request):
         import_package(hash_key, package_name)
 
     function = eval(f'{package_name}.{request_json["function"]}')
-    endpoint_context.endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function,
-                                            'entry': entry_name}
+    endpoint_context.endpoints[hash_key] = {'uri': "/" + hash_key, 'path': package_name, 'function': function,
+                                            'entry': entry_name, "id": request_json['uri']}
     response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
     return response
 
