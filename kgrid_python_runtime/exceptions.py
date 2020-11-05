@@ -25,10 +25,10 @@ def handle_syntax_error(e):
     return build_response(e, 400)
 
 
-@error_handlers.app_errorhandler(Exception)
-def handle_exception(e):
-    print('Execution error: ' + str(e))
-    return build_response(e, 400)
+# @error_handlers.app_errorhandler(Exception)
+# def handle_exception(e):
+#     print('Execution error: ' + str(e))
+#     return build_response(e, 400)
 
 
 @error_handlers.app_errorhandler(KeyError)

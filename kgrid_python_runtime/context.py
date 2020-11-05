@@ -1,5 +1,6 @@
 class Context:
     endpoints = {}
+    checksums = {}
 
     def get_executor_by_id(self, uri):
         hash_key = self.hash_uri(uri)
