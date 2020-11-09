@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from os import getenv, makedirs, path
 import os
 import json
@@ -143,13 +143,18 @@ def activate_endpoint(activation_request):
         import_package(hash_key, package_name)
 
     function = eval(f'{package_name}.{request_json["function"]}')
-    activated_time = date.today()
-    endpoint_context.endpoints[hash_key] = {'uri': "/" + hash_key, 'path': package_name, 'function': function,
-                                            'entry': entry_name, "id": request_json['uri'], "activated": activated_time,
-                                            "status": "Activated"}
-    response = {'baseUrl': python_runtime_url, 'uri': hash_key, "activated": activated_time, "status": "Activated",
+    activated_time = datetime.now()
+    status = "Activated"
+    insert_endpoint_into_context(activated_time, entry_name, function, hash_key, package_name, request_json, status)
+    response = {'baseUrl': python_runtime_url, 'uri': hash_key, "activated": activated_time, "status": status,
                 "id": activation_request.json['uri']}
     return response
+
+
+def insert_endpoint_into_context(activated_time, entry_name, function, hash_key, package_name, request_json, status):
+    endpoint_context.endpoints[hash_key] = {'uri': "/" + hash_key, 'path': package_name, 'function': function,
+                                            'entry': entry_name, "id": request_json['uri'], "activated": activated_time,
+                                            "status": status}
 
 
 def import_package(hash_key, package_name):
@@ -165,8 +170,8 @@ def import_package(hash_key, package_name):
     try:
         importlib.import_module(package_name)
     except SyntaxError as e:
+        insert_endpoint_into_context(datetime.now(), None, None, hash_key, None, {'uri': hash_key}, str(e))
         shutil.rmtree(f'{get_pyshelf_dir()}/{hash_key}')
-        e.msg = f'Error importing package: {package_name} in python runtime. {e.msg}'
         raise e
 
 
