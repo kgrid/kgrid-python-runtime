@@ -1,3 +1,4 @@
+from datetime import datetime
 from os import getenv, makedirs, path
 import os
 import json
@@ -9,11 +10,14 @@ import importlib
 import subprocess
 import requests
 import pkg_resources
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_script import Manager
+from importlib import metadata
 import pyshelf  # must be imported to activate and execute KOs
 from kgrid_python_runtime.context import Context
 from kgrid_python_runtime.exceptions import error_handlers
+
+PYTHON = 'python'
 
 version = pkg_resources.require("kgrid-python-runtime")[0].version
 
@@ -39,7 +43,7 @@ def setup_app():
     time.sleep(3)
     print(f'Kgrid Activator URL is: {activator_url}')
     print(f'Python Runtime URL is: {python_runtime_url}')
-    registration_body = {'type': 'python', 'url': python_runtime_url}
+    registration_body = {'engine': PYTHON, 'url': python_runtime_url}
     try:
         response = requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
                                  headers={'Content-Type': 'application/json'})
@@ -67,27 +71,44 @@ def root():
 
 @app.route('/info', methods=['GET'])
 def info():
+    app_name = 'kgrid-python-runtime'
     return {
-        'Status': 'Up',
-        'Activator': activator_url,
-        'Python Runtime': python_runtime_url
+        'app': app_name,
+        'version': metadata.version(app_name),
+        'status': 'up',
+        'url': python_runtime_url,
+        'engine': PYTHON,
+        'activatorUrl': activator_url
     }
 
 
-@app.route('/deployments', methods=['POST'])
+@app.route('/endpoints', methods=['POST'])
 def deployments():
     return activate_endpoint(request)
 
 
 @app.route('/endpoints', methods=['GET'])
 def endpoint_list():
-    writeable_endpoints = {}
+    writeable_endpoints = []
     endpoints = endpoint_context.endpoints.items()
     for element in endpoints:
-        element_uri = endpoint_context.hash_uri(element[1]['uri'])
-        writeable_endpoints[element_uri] = dict(element[1])
-        del writeable_endpoints[element_uri]['function']
-    return writeable_endpoints
+        endpoint = dict(element[1])
+        del endpoint['function']
+        del endpoint['path']
+        del endpoint['entry']
+        writeable_endpoints.append(endpoint)
+    return jsonify(writeable_endpoints)
+
+
+@app.route('/endpoints/<naan>/<name>/<version>/<endpoint>', methods=['GET'])
+def endpoint(naan, name, version, endpoint):
+    hash_key = endpoint_context.hash_uri(f'{naan}/{name}/{version}/{endpoint}')
+    element = endpoint_context.endpoints[hash_key]
+    endpoint = dict(element)
+    del endpoint['function']
+    del endpoint['path']
+    del endpoint['entry']
+    return jsonify(endpoint)
 
 
 @app.route('/<endpoint_key>', methods=['POST'])
@@ -97,12 +118,12 @@ def execute_endpoint(endpoint_key):
     if request.content_type == 'application/json':
         try:
             result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
-        except KeyError as e:
+        except KeyError:
             raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
     else:
         try:
             result = endpoint_context.endpoints[endpoint_key]['function'](data.decode("UTF-8"))
-        except KeyError as e:
+        except KeyError:
             raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
 
     return {'result': result}
@@ -122,10 +143,18 @@ def activate_endpoint(activation_request):
         import_package(hash_key, package_name)
 
     function = eval(f'{package_name}.{request_json["function"]}')
-    endpoint_context.endpoints[hash_key] = {'uri': request_json['uri'], 'path': package_name, 'function': function,
-                                            'entry': entry_name}
-    response = {'baseUrl': python_runtime_url, 'endpointUrl': hash_key}
+    activated_time = datetime.now()
+    status = "Activated"
+    insert_endpoint_into_context(activated_time, entry_name, function, hash_key, package_name, request_json, status)
+    response = {'baseUrl': python_runtime_url, 'uri': hash_key, "activated": activated_time, "status": status,
+                "id": activation_request.json['uri']}
     return response
+
+
+def insert_endpoint_into_context(activated_time, entry_name, function, hash_key, package_name, request_json, status):
+    endpoint_context.endpoints[hash_key] = {'uri': "/" + hash_key, 'path': package_name, 'function': function,
+                                            'entry': entry_name, "id": request_json['uri'], "activated": activated_time,
+                                            "status": status}
 
 
 def import_package(hash_key, package_name):
@@ -141,8 +170,8 @@ def import_package(hash_key, package_name):
     try:
         importlib.import_module(package_name)
     except SyntaxError as e:
+        insert_endpoint_into_context(datetime.now(), None, None, hash_key, None, {'uri': hash_key}, str(e))
         shutil.rmtree(f'{get_pyshelf_dir()}/{hash_key}')
-        e.msg = f'Error importing package: {package_name} in python runtime. {e.msg}'
         raise e
 
 
