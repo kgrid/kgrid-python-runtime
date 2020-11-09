@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 import shutil
 import unittest
 import responses
