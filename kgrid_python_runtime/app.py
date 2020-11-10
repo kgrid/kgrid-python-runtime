@@ -1,6 +1,5 @@
 from datetime import datetime
 from os import getenv, makedirs, path
-import os
 import json
 import threading
 import time
@@ -50,12 +49,10 @@ def setup_app():
         if response.status_code != 200:
             print(f'Could not register this runtime at the url {activator_url} '
                   f'Check that the activator is running at that address.')
-            os._exit(-1)
         else:
             requests.get(activator_url + '/activate/python')
     except requests.ConnectionError as err:
         print(f'Could not connect to remote activator at {activator_url} Error: {err}')
-        os._exit(-1)
 
 
 @app.route('/', methods=['GET'])
