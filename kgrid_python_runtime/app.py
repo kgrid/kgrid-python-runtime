@@ -42,6 +42,21 @@ def setup_app():
     time.sleep(3)
     print(f'Kgrid Activator URL is: {activator_url}')
     print(f'Python Runtime URL is: {python_runtime_url}')
+    if path.isfile('context.json'):
+        with open('context.json') as context_json:
+            endpoint_context.endpoints = json.load(context_json)
+        for key, endpoint in endpoint_context.endpoints.items():
+            hash_key = key
+            entry_name = endpoint['entry']
+            function_name = endpoint['function_name']
+            uri = endpoint['id']
+            package_name = 'pyshelf.' + hash_key + '.' + entry_name
+            activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri)
+
+    register_with_activator()
+
+
+def register_with_activator():
     registration_body = {'engine': PYTHON, 'url': python_runtime_url}
     try:
         response = requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
@@ -81,7 +96,7 @@ def info():
 
 @app.route('/endpoints', methods=['POST'])
 def deployments():
-    return activate_endpoint(request)
+    return activate_from_request(request)
 
 
 @app.route('/endpoints', methods=['GET'])
@@ -89,10 +104,7 @@ def endpoint_list():
     writeable_endpoints = []
     endpoints = endpoint_context.endpoints.items()
     for element in endpoints:
-        endpoint = dict(element[1])
-        del endpoint['function']
-        del endpoint['path']
-        del endpoint['entry']
+        endpoint = make_serializeable_endpoint(element[1])
         writeable_endpoints.append(endpoint)
     return jsonify(writeable_endpoints)
 
@@ -101,11 +113,23 @@ def endpoint_list():
 def endpoint(naan, name, version, endpoint):
     hash_key = endpoint_context.hash_uri(f'{naan}/{name}/{version}/{endpoint}')
     element = endpoint_context.endpoints[hash_key]
-    endpoint = dict(element)
-    del endpoint['function']
-    del endpoint['path']
-    del endpoint['entry']
+    endpoint = make_serializeable_endpoint(element)
     return jsonify(endpoint)
+
+@app.route('/register', methods=['GET'])
+def register():
+    register_with_activator()
+    return {"Registered with": activator_url}
+
+
+def make_serializeable_endpoint(element):
+    serializable_endpoint = dict(element)
+    if serializable_endpoint['url'] is None:
+        del serializable_endpoint['url']
+    del serializable_endpoint['function']
+    del serializable_endpoint['path']
+    del serializable_endpoint['entry']
+    return serializable_endpoint
 
 
 @app.route('/<endpoint_key>', methods=['POST'])
@@ -126,12 +150,18 @@ def execute_endpoint(endpoint_key):
     return {'result': result}
 
 
-def activate_endpoint(activation_request):
+def activate_from_request(activation_request):
     request_json = activation_request.json
     print(f'activator sent over json in activation request {request_json}')
     hash_key = copy_artifacts_to_shelf(activation_request)
     entry_name = request_json['entry'].rsplit('.', 2)[0].replace('/', '.')
     package_name = 'pyshelf.' + hash_key + '.' + entry_name
+    function_name = request_json['function']
+    uri = request_json['uri']
+    return activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri)
+
+
+def activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri):
     if package_name in sys.modules:
         for module in list(sys.modules):
             if module.startswith('pyshelf.' + hash_key):
@@ -139,19 +169,28 @@ def activate_endpoint(activation_request):
     else:
         import_package(hash_key, package_name)
 
-    function = eval(f'{package_name}.{request_json["function"]}')
+    function = eval(f'{package_name}.{function_name}')
     activated_time = datetime.now()
     status = "Activated"
-    insert_endpoint_into_context(activated_time, entry_name, function, hash_key, package_name, request_json, status)
-    response = {'baseUrl': python_runtime_url, 'uri': hash_key, "activated": activated_time, "status": status,
-                "id": activation_request.json['uri']}
+    if python_runtime_url.endswith("/"):
+        url = python_runtime_url + hash_key
+    else:
+        url = python_runtime_url + "/" + hash_key
+    insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
+                                 status)
+    response = {'baseUrl': python_runtime_url, 'url': url, "activated": activated_time, "status": status,
+                "id": uri, 'uri': hash_key}
     return response
 
 
-def insert_endpoint_into_context(activated_time, entry_name, function, hash_key, package_name, request_json, status):
-    endpoint_context.endpoints[hash_key] = {'uri': "/" + hash_key, 'path': package_name, 'function': function,
-                                            'entry': entry_name, "id": request_json['uri'], "activated": activated_time,
+def insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
+                                 status):
+    endpoint_context.endpoints[hash_key] = {'url': url, 'path': package_name, 'function': function, 'function_name':
+                                            function_name, 'entry': entry_name, "id": uri, "activated": activated_time,
                                             "status": status}
+
+    with open('context.json', 'w') as outfile:
+        outfile.write(json.dumps(endpoint_context.endpoints, indent=4, sort_keys=True, default=str))
 
 
 def import_package(hash_key, package_name):
@@ -167,7 +206,7 @@ def import_package(hash_key, package_name):
     try:
         importlib.import_module(package_name)
     except SyntaxError as e:
-        insert_endpoint_into_context(datetime.now(), None, None, hash_key, None, {'uri': hash_key}, str(e))
+        insert_endpoint_into_context(hash_key, datetime.now(), None, None, None, None, {'uri': hash_key}, str(e))
         shutil.rmtree(f'{get_pyshelf_dir()}/{hash_key}')
         raise e
 
