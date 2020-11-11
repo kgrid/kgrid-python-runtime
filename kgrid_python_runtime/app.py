@@ -49,9 +49,10 @@ def setup_app():
             hash_key = key
             entry_name = endpoint['entry']
             function_name = endpoint['function_name']
+            checksum = endpoint['checksum']
             uri = endpoint['id']
             package_name = 'pyshelf.' + hash_key + '.' + entry_name
-            activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri)
+            activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
 
     register_with_activator()
 
@@ -158,10 +159,15 @@ def activate_from_request(activation_request):
     package_name = 'pyshelf.' + hash_key + '.' + entry_name
     function_name = request_json['function']
     uri = request_json['uri']
-    return activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri)
+    if getenv('KGRID_PYTHON_CACHE_OBJECTS') == 'true' and hash_key in endpoint_context.endpoints and \
+            request_json['checksum'] == endpoint_context.endpoints[hash_key]['checksum']:
+        return {'baseUrl': python_runtime_url, 'url': endpoint_context.endpoints[hash_key]['url'],
+                "activated": endpoint_context.endpoints[hash_key]['activated'],
+                "status": endpoint_context.endpoints[hash_key]['status'], "id": uri, 'uri': hash_key}
+    return activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, request_json['checksum'])
 
 
-def activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri):
+def activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum):
     if package_name in sys.modules:
         for module in list(sys.modules):
             if module.startswith('pyshelf.' + hash_key):
@@ -177,17 +183,17 @@ def activate_existing_endpoint(package_name, hash_key, entry_name, function_name
     else:
         url = python_runtime_url + "/" + hash_key
     insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
-                                 status)
+                                 status, checksum)
     response = {'baseUrl': python_runtime_url, 'url': url, "activated": activated_time, "status": status,
                 "id": uri, 'uri': hash_key}
     return response
 
 
 def insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
-                                 status):
+                                 status, checksum):
     endpoint_context.endpoints[hash_key] = {'url': url, 'path': package_name, 'function': function, 'function_name':
                                             function_name, 'entry': entry_name, "id": uri, "activated": activated_time,
-                                            "status": status}
+                                            "status": status, "checksum": checksum}
 
     with open('context.json', 'w') as outfile:
         outfile.write(json.dumps(endpoint_context.endpoints, indent=4, sort_keys=True, default=str))

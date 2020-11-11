@@ -21,6 +21,8 @@ This will be the address given to the Kgrid Activator upon activation.
     If you're starting the runtime at a different address, that url must be specified by setting the environment variable:
     `KGRID_PYTHON_ENV_URL`
     
+- To have the runtime cache objects and only reload them from the activator if the checksum generated during packaging changes set `KGRID_PYTHON_CACHE_OBJECTS` to `true`
+    
 ## To run the tests:
 `python -m unittest discover -s tests`
     
