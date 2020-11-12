@@ -21,7 +21,12 @@ This will be the address given to the Kgrid Activator upon activation.
     If you're starting the runtime at a different address, that url must be specified by setting the environment variable:
     `KGRID_PYTHON_ENV_URL`
     
-- To have the runtime cache objects and only reload them from the activator if the checksum generated during packaging changes set `KGRID_PYTHON_CACHE_OBJECTS` to `true`
+
+- The `KGRID_PYTHON_CACHE_STRATEGY` can take three values: `never`, `always`, or `use_checksum`
+
+    - `never` or if no value is set means that existing objects will be overwritten whenever objects are re-downloaded from the activator.
+    - `always` means that existing objects stored in the python runtime will never be re-downloaded from the activator and the local pyshelf and context.json files must be deleted and the runtime restarted for the objects to be replaced.
+    - `use_checksum` means that objects will look for a checksum in the deployment descriptor sent over during activation and only re-download the object if that checksum has changed.
     
 ## To run the tests:
 `python -m unittest discover -s tests`
