@@ -159,12 +159,17 @@ def activate_from_request(activation_request):
     package_name = 'pyshelf.' + hash_key + '.' + entry_name
     function_name = request_json['function']
     uri = request_json['uri']
+    if 'checksum' in request_json:
+        checksum = request_json['checksum']
+    else:
+        checksum = None
     if getenv('KGRID_PYTHON_CACHE_OBJECTS') == 'true' and hash_key in endpoint_context.endpoints and \
-            request_json['checksum'] == endpoint_context.endpoints[hash_key]['checksum']:
+            'checksum' in request_json and \
+            checksum == endpoint_context.endpoints[hash_key]['checksum']:
         return {'baseUrl': python_runtime_url, 'url': endpoint_context.endpoints[hash_key]['url'],
                 "activated": endpoint_context.endpoints[hash_key]['activated'],
                 "status": endpoint_context.endpoints[hash_key]['status'], "id": uri, 'uri': hash_key}
-    return activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, request_json['checksum'])
+    return activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
 
 
 def activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum):
