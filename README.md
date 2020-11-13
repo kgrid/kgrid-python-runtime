@@ -51,3 +51,8 @@ That's it! as long as the payload is written in valid python,
 and the object is built to the spec, you're ready to go.
 An example python object can be found in the 
 [example collection](https://github.com/kgrid-objects/example-collection/releases/download/4.0.0/python-simple-v1.0.zip)
+
+## Important Notes
+- Editing the cache directly from the runtime's shelf will
+not propagate changes to the endpoints in the runtime. New
+KOs must come from the activator.
