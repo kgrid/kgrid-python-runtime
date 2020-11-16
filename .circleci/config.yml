@@ -27,7 +27,7 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            python -m unittest discover -s tests
+            python3 -m unittest discover -s tests
       - store_artifacts:
           path: test-reports/
           destination: tr1

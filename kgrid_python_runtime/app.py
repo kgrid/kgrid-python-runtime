@@ -8,7 +8,6 @@ import sys
 import importlib
 import subprocess
 import requests
-import pkg_resources
 from flask import Flask, request, jsonify
 from flask_script import Manager
 from importlib import metadata
@@ -18,7 +17,10 @@ from kgrid_python_runtime.exceptions import error_handlers
 
 PYTHON = 'python'
 
-version = pkg_resources.require("kgrid-python-runtime")[0].version
+this_dir = path.dirname(path.realpath(__file__))
+with open(path.join(this_dir, '..', 'VERSION')) as version_file:
+    version = version_file.read().strip()
+
 
 endpoint_context = Context()
 

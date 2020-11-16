@@ -39,14 +39,17 @@ class Tests(unittest.TestCase):
             shutil.rmtree(f'pyshelf/{naan}_{name}_{version}_{endpoint}')
 
     def test_info(self):
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(this_dir, '..', 'VERSION')) as version_file:
+            version = version_file.read().strip()
         response = self.app.get('/info')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(b'{"activatorUrl":"http://localhost:8080",'
-                         b'"app":"kgrid-python-runtime",'
-                         b'"engine":"python",'
-                         b'"status":"up",'
-                         b'"url":"http://localhost:5000",'
-                         b'"version":"0.0.12"}\n', response.data)
+        self.assertEqual(f'{{"activatorUrl":"http://localhost:8080",'
+                         f'"app":"kgrid-python-runtime",'
+                         f'"engine":"python",'
+                         f'"status":"up",'
+                         f'"url":"http://localhost:5000",'
+                         f'"version":"{version}"}}\n'.encode('utf-8'), response.data)
 
     @responses.activate
     def test_activate(self):
