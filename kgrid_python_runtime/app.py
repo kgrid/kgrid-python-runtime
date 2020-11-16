@@ -89,7 +89,7 @@ def info():
     app_name = 'kgrid-python-runtime'
     return {
         'app': app_name,
-        'version': metadata.version(app_name),
+        'version': version,
         'status': 'up',
         'url': python_runtime_url,
         'engine': PYTHON,
