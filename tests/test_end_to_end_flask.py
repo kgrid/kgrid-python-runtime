@@ -46,7 +46,7 @@ class Tests(unittest.TestCase):
                          b'"engine":"python",'
                          b'"status":"up",'
                          b'"url":"http://localhost:5000",'
-                         b'"version":"0.0.8"}\n', response.data)
+                         b'"version":"0.0.12"}\n', response.data)
 
     @responses.activate
     def test_activate(self):
