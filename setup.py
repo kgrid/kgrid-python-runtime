@@ -1,8 +1,16 @@
+import os
 import setuptools
+
+this_dir = os.path.dirname(os.path.realpath(__file__))
+requirements = this_dir + '/requirements.txt'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+reqs = []
+if os.path.isfile(requirements):
+    with open(requirements) as file:
+        reqs = file.read().splitlines()
 
 setuptools.setup(
     name="kgrid-python-runtime",
@@ -25,5 +33,6 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],
     python_requires='>=3.8',
-    install_requires=['flask', 'Flask-Script', 'werkzeug', 'requests', 'responses']
+    install_requires=reqs
+
 )
