@@ -12,6 +12,7 @@ endpoint = 'endpoint'
 activator_url = 'http://localhost:8080'
 python_runtime_url = 'http://localhost:5000'
 proxy_env_endpoint = '/proxy/environments'
+test_context_json = 'test_context.json'
 
 payload_return_value = b'def welcome(json_input):\n    return f\'Welcome to the Knowledge Grid, {json_input["name"]}\''
 flask_request_json = {
@@ -30,6 +31,7 @@ class Tests(unittest.TestCase):
         app.config['WTF_CSRF_ENABLED'] = False
         app.config['DEBUG'] = False
         app.config['TEST_SHELF_PARENT'] = ""
+        app.config['TEST_CONTEXT'] = test_context_json
         responses.add(responses.GET, f'{activator_url}{proxy_env_endpoint}',
                       body={"registered"}, status=200)
         self.app = app.test_client()
@@ -37,6 +39,8 @@ class Tests(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(f'pyshelf/{naan}_{name}_{version}_{endpoint}'):
             shutil.rmtree(f'pyshelf/{naan}_{name}_{version}_{endpoint}')
+        if os.path.exists(test_context_json):
+            os.remove(test_context_json)
 
     def test_info(self):
         this_dir = os.path.dirname(os.path.realpath(__file__))

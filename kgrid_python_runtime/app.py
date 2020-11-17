@@ -21,7 +21,6 @@ this_dir = path.dirname(path.realpath(__file__))
 with open(path.join(this_dir, 'VERSION')) as version_file:
     version = version_file.read().strip()
 
-
 endpoint_context = Context()
 
 app = Flask(__name__)
@@ -119,6 +118,7 @@ def endpoint(naan, name, version, endpoint):
     endpoint = make_serializeable_endpoint(element)
     return jsonify(endpoint)
 
+
 @app.route('/register', methods=['GET'])
 def register():
     register_with_activator()
@@ -204,10 +204,14 @@ def activate_existing_endpoint(package_name, hash_key, entry_name, function_name
 def insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
                                  status, checksum):
     endpoint_context.endpoints[hash_key] = {'url': url, 'path': package_name, 'function': function, 'function_name':
-                                            function_name, 'entry': entry_name, "id": uri, "activated": activated_time,
+        function_name, 'entry': entry_name, "id": uri, "activated": activated_time,
                                             "status": status, "checksum": checksum}
 
-    with open('context.json', 'w') as outfile:
+    if 'TEST_CONTEXT' in app.config:
+        context_file = app.config['TEST_CONTEXT']
+    else:
+        context_file = 'context.json'
+    with open(context_file, 'w') as outfile:
         outfile.write(json.dumps(endpoint_context.endpoints, indent=4, sort_keys=True, default=str))
 
 
