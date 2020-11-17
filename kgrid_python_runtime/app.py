@@ -18,7 +18,7 @@ from kgrid_python_runtime.exceptions import error_handlers
 PYTHON = 'python'
 
 this_dir = path.dirname(path.realpath(__file__))
-with open(path.join(this_dir, '..', 'VERSION')) as version_file:
+with open(path.join(this_dir, 'VERSION')) as version_file:
     version = version_file.read().strip()
 
 
