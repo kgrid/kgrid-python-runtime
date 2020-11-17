@@ -11,7 +11,7 @@ if os.path.isfile(requirements):
     with open(requirements) as file:
         install_requires = file.read().splitlines()
 
-with open(os.path.join(this_dir, 'kgrid_python_runtime', 'VERSION')) as version_file:
+with open(os.path.join(this_dir, 'VERSION')) as version_file:
     version = version_file.read().strip()
 
 setuptools.setup(
@@ -35,6 +35,6 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],
     python_requires='>=3.8',
-    install_requires=install_requires
-
+    install_requires=install_requires,
+    include_package_data=True
 )

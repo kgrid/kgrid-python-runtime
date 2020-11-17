@@ -40,7 +40,7 @@ class Tests(unittest.TestCase):
 
     def test_info(self):
         this_dir = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(this_dir, '..', 'kgrid_python_runtime', 'VERSION')) as version_file:
+        with open(os.path.join(this_dir, '..', 'VERSION')) as version_file:
             version = version_file.read().strip()
         response = self.app.get('/info')
         self.assertEqual(response.status_code, 200)
