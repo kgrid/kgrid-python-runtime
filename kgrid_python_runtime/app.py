@@ -8,14 +8,17 @@ import sys
 import importlib
 import subprocess
 import requests
+import logging
 from flask import Flask, request, jsonify
 from flask_script import Manager
-from importlib import metadata
 import pyshelf  # must be imported to activate and execute KOs
 from kgrid_python_runtime.context import Context
 from kgrid_python_runtime.exceptions import error_handlers
 
 PYTHON = 'python'
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 this_dir = path.dirname(path.realpath(__file__))
 with open(path.join(this_dir, 'VERSION')) as version_file:
@@ -138,7 +141,6 @@ def make_serializeable_endpoint(element):
 @app.route('/<endpoint_key>', methods=['POST'])
 def execute_endpoint(endpoint_key):
     data = request.get_data()
-    print(f'activator sent over data in execute request {data}')
     if request.content_type == 'application/json':
         try:
             result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
