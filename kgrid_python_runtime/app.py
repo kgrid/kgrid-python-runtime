@@ -8,17 +8,21 @@ import sys
 import importlib
 import subprocess
 import requests
-import pkg_resources
+import logging
 from flask import Flask, request, jsonify
 from flask_script import Manager
-from importlib import metadata
 import pyshelf  # must be imported to activate and execute KOs
 from kgrid_python_runtime.context import Context
 from kgrid_python_runtime.exceptions import error_handlers
 
 PYTHON = 'python'
 
-version = pkg_resources.require("kgrid-python-runtime")[0].version
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+this_dir = path.dirname(path.realpath(__file__))
+with open(path.join(this_dir, 'VERSION')) as version_file:
+    version = version_file.read().strip()
 
 endpoint_context = Context()
 
@@ -87,7 +91,7 @@ def info():
     app_name = 'kgrid-python-runtime'
     return {
         'app': app_name,
-        'version': metadata.version(app_name),
+        'version': version,
         'status': 'up',
         'url': python_runtime_url,
         'engine': PYTHON,
@@ -117,6 +121,7 @@ def endpoint(naan, name, version, endpoint):
     endpoint = make_serializeable_endpoint(element)
     return jsonify(endpoint)
 
+
 @app.route('/register', methods=['GET'])
 def register():
     register_with_activator()
@@ -136,7 +141,6 @@ def make_serializeable_endpoint(element):
 @app.route('/<endpoint_key>', methods=['POST'])
 def execute_endpoint(endpoint_key):
     data = request.get_data()
-    print(f'activator sent over data in execute request {data}')
     if request.content_type == 'application/json':
         try:
             result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
@@ -202,10 +206,14 @@ def activate_existing_endpoint(package_name, hash_key, entry_name, function_name
 def insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
                                  status, checksum):
     endpoint_context.endpoints[hash_key] = {'url': url, 'path': package_name, 'function': function, 'function_name':
-                                            function_name, 'entry': entry_name, "id": uri, "activated": activated_time,
+        function_name, 'entry': entry_name, "id": uri, "activated": activated_time,
                                             "status": status, "checksum": checksum}
 
-    with open('context.json', 'w') as outfile:
+    if 'TEST_CONTEXT' in app.config:
+        context_file = app.config['TEST_CONTEXT']
+    else:
+        context_file = 'context.json'
+    with open(context_file, 'w') as outfile:
         outfile.write(json.dumps(endpoint_context.endpoints, indent=4, sort_keys=True, default=str))
 
 

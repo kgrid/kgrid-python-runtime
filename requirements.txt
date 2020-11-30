@@ -1,0 +1,5 @@
+flask==1.1.2
+Flask-Script==2.0.6
+requests==2.25.0
+werkzeug==1.0.1
+responses==0.12.1

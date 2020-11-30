@@ -12,6 +12,7 @@ endpoint = 'endpoint'
 activator_url = 'http://localhost:8080'
 python_runtime_url = 'http://localhost:5000'
 proxy_env_endpoint = '/proxy/environments'
+test_context_json = 'test_context.json'
 
 payload_return_value = b'def welcome(json_input):\n    return f\'Welcome to the Knowledge Grid, {json_input["name"]}\''
 flask_request_json = {
@@ -30,6 +31,7 @@ class Tests(unittest.TestCase):
         app.config['WTF_CSRF_ENABLED'] = False
         app.config['DEBUG'] = False
         app.config['TEST_SHELF_PARENT'] = ""
+        app.config['TEST_CONTEXT'] = test_context_json
         responses.add(responses.GET, f'{activator_url}{proxy_env_endpoint}',
                       body={"registered"}, status=200)
         self.app = app.test_client()
@@ -37,16 +39,21 @@ class Tests(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(f'pyshelf/{naan}_{name}_{version}_{endpoint}'):
             shutil.rmtree(f'pyshelf/{naan}_{name}_{version}_{endpoint}')
+        if os.path.exists(test_context_json):
+            os.remove(test_context_json)
 
     def test_info(self):
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(this_dir, '..', 'kgrid_python_runtime', 'VERSION')) as version_file:
+            version = version_file.read().strip()
         response = self.app.get('/info')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(b'{"activatorUrl":"http://localhost:8080",'
-                         b'"app":"kgrid-python-runtime",'
-                         b'"engine":"python",'
-                         b'"status":"up",'
-                         b'"url":"http://localhost:5000",'
-                         b'"version":"0.0.8"}\n', response.data)
+        self.assertEqual(f'{{"activatorUrl":"http://localhost:8080",'
+                         f'"app":"kgrid-python-runtime",'
+                         f'"engine":"python",'
+                         f'"status":"up",'
+                         f'"url":"http://localhost:5000",'
+                         f'"version":"{version}"}}\n'.encode('utf-8'), response.data)
 
     @responses.activate
     def test_activate(self):

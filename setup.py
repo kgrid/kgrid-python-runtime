@@ -1,12 +1,22 @@
+import os
 import setuptools
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+this_dir = os.path.dirname(os.path.realpath(__file__))
+requirements = os.path.join(this_dir, 'requirements.txt')
+install_requires = []
+if os.path.isfile(requirements):
+    with open(requirements) as file:
+        install_requires = file.read().splitlines()
+
+with open(os.path.join(this_dir, 'kgrid_python_runtime', 'VERSION')) as version_file:
+    version = version_file.read().strip()
 
 setuptools.setup(
     name="kgrid-python-runtime",
-    version="0.0.11",
+    version=version,
     author="Kgrid Developers",
     author_email="kgrid-developers@umich.edu",
     description="A runtime for python-based Knowledge Objects",
@@ -25,5 +35,6 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],
     python_requires='>=3.8',
-    install_requires=['flask', 'Flask-Script', 'werkzeug', 'requests', 'responses']
+    install_requires=install_requires,
+    include_package_data=True
 )
