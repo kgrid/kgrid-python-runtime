@@ -63,12 +63,11 @@ def setup_app():
 
 def register_with_activator():
     registration_body = {'engine': PYTHON, 'url': python_runtime_url}
-
+    global activator_url
     try:
-        proxy_env = activator_url + '/proxy/environments'
         if activator_url.endswith('/'):
-            proxy_env = activator_url + 'proxy/environments'
-        response = requests.post(proxy_env, data=json.dumps(registration_body),
+            activator_url = activator_url[:-1]
+        response = requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
                                  headers={'Content-Type': 'application/json'})
         if response.status_code != 200:
             print(f'Could not register this runtime at the url {activator_url} '
