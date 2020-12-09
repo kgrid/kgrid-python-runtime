@@ -62,7 +62,7 @@ def setup_app():
 
 
 def register_with_activator():
-    registration_body = {'engine': PYTHON, 'url': python_runtime_url}
+    registration_body = {'engine': PYTHON, 'version': version, 'url': python_runtime_url}
     global activator_url
     try:
         if activator_url.endswith('/'):
