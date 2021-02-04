@@ -8,6 +8,8 @@ KGrid runtime for Knowledge Objects in python
 - Run `python -m pip install kgrid-python-runtime` to download the latest package
 - Create a directory called `pyshelf` in the directory the runtime will be running from.
 - To start the server run `python -m kgrid_python_runtime`
+  
+### Configuration
 - If this runtime will not be running locally, you must specify the address with `KGRID_PYTHON_ENV_URL`. 
 This will be the address given to the Kgrid Activator upon activation.
 - The runtime starts on port 5000, but can be specified with `KGRID_PYTHON_ENV_PORT`
@@ -20,18 +22,15 @@ This will be the address given to the Kgrid Activator upon activation.
     
     If you're starting the runtime at a different address, that url must be specified by setting the environment variable:
     `KGRID_PYTHON_ENV_URL`
-    
-
+  
 - The `KGRID_PYTHON_CACHE_STRATEGY` can take three values: `never`, `always`, or `use_checksum`
 
     - `never` or if no value is set means that existing objects will be overwritten whenever objects are re-downloaded from the activator.
     - `always` means that existing objects stored in the python runtime will never be re-downloaded from the activator and the local pyshelf and context.json files must be deleted and the runtime restarted for the objects to be replaced.
     - `use_checksum` means that objects will look for a checksum in the deployment descriptor sent over during activation and only re-download the object if that checksum has changed.
-    
-## To run the tests:
-`python -m unittest discover -s tests`
-    
-##Creating a python Knowledge-Object:
+- To enable automatic discovery and registration with the activator, set `KGRID_PROXY_HEARTBEAT_INTERVAL` to a value greater than 5.
+
+## Creating a python Knowledge-Object:
 Just like other knowledge objects, python objects have 4 basic parts: 
 service.yaml, deployment.yaml, metadata.txt, 
 and a payload that can be any number of python files.
@@ -52,6 +51,13 @@ and the object is built to the spec, you're ready to go.
 An example python object can be found in the 
 [example collection](https://github.com/kgrid-objects/example-collection/releases/download/4.0.0/python-simple-v1.0.zip)
 
+
+# For Developers
+## To run the app:
+Run `python kgrid_python_runtime/app.py runserver` from the top level of the project.
+## To run the tests:
+`python -m unittest discover -s tests`
+    
 ## Important Notes
 - Editing the cache directly from the runtime's shelf will
 not propagate changes to the endpoints in the runtime. New
