@@ -58,11 +58,17 @@ def setup_app():
             package_name = 'pyshelf.' + hash_key + '.' + entry_name
             activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
 
-    register_with_activator()
+    register_with_activator(True)
 
 
-def register_with_activator():
-    registration_body = {'engine': PYTHON, 'version': version, 'url': python_runtime_url}
+def register_with_activator(request_refresh):
+    registration_body = {
+        'engine': PYTHON,
+        'version': version,
+        'url': python_runtime_url,
+        'forceUpdate': request_refresh
+    }
+    print('****** JSON ******:' + json.dumps(registration_body))
     global activator_url
     try:
         if activator_url.endswith('/'):
@@ -112,7 +118,7 @@ def endpoint_list():
     writeable_endpoints = []
     endpoints = endpoint_context.endpoints.items()
     for element in endpoints:
-        endpoint = make_serializeable_endpoint(element[1])
+        endpoint = make_serializable_endpoint(element[1])
         writeable_endpoints.append(endpoint)
     return jsonify(writeable_endpoints)
 
@@ -121,17 +127,17 @@ def endpoint_list():
 def endpoint(naan, name, version, endpoint):
     hash_key = endpoint_context.hash_uri(f'{naan}/{name}/{version}/{endpoint}')
     element = endpoint_context.endpoints[hash_key]
-    endpoint = make_serializeable_endpoint(element)
+    endpoint = make_serializable_endpoint(element)
     return jsonify(endpoint)
 
 
 @app.route('/register', methods=['GET'])
 def register():
-    register_with_activator()
+    register_with_activator(True)
     return {"Registered with": activator_url}
 
 
-def make_serializeable_endpoint(element):
+def make_serializable_endpoint(element):
     serializable_endpoint = dict(element)
     if serializable_endpoint['url'] is None:
         del serializable_endpoint['url']
@@ -261,10 +267,26 @@ def copy_artifacts_to_shelf(activation_request):
 manager = Manager(app)
 
 
+def heart_beat():
+    print("<3")
+    register_with_activator(False)
+
+
+def start_heart():
+    print('Starting Heart Beat')
+    heart_rate = int(getenv('KGRID_PROXY_HEARTBEAT_INTERVAL', 30))
+    if heart_rate != 0:
+        ticker = threading.Event()
+        while not ticker.wait(heart_rate):
+            heart_beat()
+
+
 @manager.command
 def runserver():
-    thread = threading.Thread(target=setup_app)
-    thread.start()
+    app_thread = threading.Thread(target=setup_app)
+    heart_string = threading.Thread(target=start_heart)
+    app_thread.start()
+    heart_string.start()
     app.run(port=app_port, host='0.0.0.0')
 
 
