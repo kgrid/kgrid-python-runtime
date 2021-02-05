@@ -14,8 +14,8 @@ from flask import Flask, request, jsonify
 from flask_api import status
 from flask_script import Manager
 
-from context import Context
-from exceptions import error_handlers
+from kgrid_python_runtime.context import Context
+from kgrid_python_runtime.exceptions import error_handlers
 
 PYTHON = 'python'
 
