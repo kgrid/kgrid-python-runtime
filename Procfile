@@ -1,1 +1,1 @@
-web: python app.py runserver
+web: python kgrid_python_runtime/app.py runserver
