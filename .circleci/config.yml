@@ -27,6 +27,8 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
+            pwd
+            export PYTHONPATH=~/kgrid-python-runtime/tests
             cd tests
             python3 -m unittest discover
       - store_artifacts:
