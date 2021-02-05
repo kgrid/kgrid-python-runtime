@@ -28,7 +28,7 @@ jobs:
           command: |
             . venv/bin/activate
             pwd
-            export PYTHONPATH=/home/circleci/kgrid-python-runtime/tests
+            export PYTHONPATH=/home/circleci/kgrid-python-runtime
             cd tests
             python3 -m unittest discover
       - store_artifacts:
