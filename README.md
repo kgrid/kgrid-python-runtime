@@ -31,6 +31,7 @@ This will be the address given to the Kgrid Activator upon activation.
 - By default, automatic discovery and registration with the activator will happen every 30 seconds.
   To customize the frequency, set `KGRID_PROXY_HEARTBEAT_INTERVAL` to a value greater than 5. 
   To turn it off, set the same variable to a value less than 5.
+- To see `DEBUG` level logging, set the environment variable `DEBUG` to `True`
 
 ## Creating a python Knowledge-Object:
 Just like other knowledge objects, python objects have 4 basic parts: 
