@@ -309,9 +309,9 @@ def start_heart():
 @manager.command
 def runserver():
     app_thread = threading.Thread(target=setup_app)
-    heart_string = threading.Thread(target=start_heart)
+    heartbeat_thread = threading.Thread(target=start_heart)
     app_thread.start()
-    heart_string.start()
+    heartbeat_thread.start()
     app.run(port=app_port, host='0.0.0.0')
 
 
