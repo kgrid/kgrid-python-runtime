@@ -3,3 +3,7 @@ Flask-Script==2.0.6
 requests==2.25.0
 werkzeug==1.0.1
 responses==0.12.1
+leftpad~=0.1.2
+tinyhtml~=1.0.0b1
+setuptools~=50.3.0
+Flask-API.yandex~=0.6.2.1
