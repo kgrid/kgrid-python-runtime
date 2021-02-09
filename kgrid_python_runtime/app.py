@@ -321,7 +321,7 @@ def runserver():
         log.debug(f'Starting heart beat at every {heart_rate} seconds')
         heartbeat_thread = threading.Thread(target=start_heart)
         heartbeat_thread.start()
-    app.run(port=app_port, host='0.0.0.0', debug=is_debug_mode)
+    app.run(port=app_port, host='0.0.0.0')
 
 
 if __name__ == '__main__':
