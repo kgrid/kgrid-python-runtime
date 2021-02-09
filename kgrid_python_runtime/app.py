@@ -18,18 +18,21 @@ from kgrid_python_runtime.exceptions import error_handlers
 
 PYSHELF_DIRECTORY = 'pyshelf'
 PYTHON = 'python'
+is_debug_mode = getenv('DEBUG', False)
+log = logging.getLogger('logger')
 
 werkzueg_logger = logging.getLogger('werkzeug')
 werkzueg_logger.setLevel(logging.ERROR)
-is_debug_mode = getenv('DEBUG', False)
-log = logging.getLogger('logger')
 stream_handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s")
 if is_debug_mode:
     log.setLevel(logging.DEBUG)
     stream_handler.setLevel(logging.DEBUG)
-    stream_handler.setFormatter(formatter)
-    log.addHandler(stream_handler)
+else:
+    log.setLevel(logging.INFO)
+    stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(formatter)
+log.addHandler(stream_handler)
 
 this_dir = path.dirname(path.realpath(__file__))
 with open(path.join(this_dir, 'VERSION')) as version_file:
@@ -48,8 +51,8 @@ python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port
 
 def setup_app():
     time.sleep(3)
-    log.debug(f'Kgrid Activator URL is: {activator_url}')
-    log.debug(f'Python Runtime URL is: {python_runtime_url}')
+    log.info(f'Kgrid Activator URL is: {activator_url}')
+    log.info(f'Python Runtime URL is: {python_runtime_url}')
     if path.isfile('context.json'):
         with open('context.json') as context_json:
             endpoint_context.endpoints = json.load(context_json)
