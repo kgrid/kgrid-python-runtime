@@ -25,7 +25,7 @@ werkzueg_logger = logging.getLogger('werkzeug')
 werkzueg_logger.setLevel(logging.ERROR)
 stream_handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s")
-if is_debug_mode:
+if is_debug_mode.lower() == 'true':
     log.setLevel(logging.DEBUG)
     stream_handler.setLevel(logging.DEBUG)
 else:
@@ -83,7 +83,7 @@ def register_with_activator(request_refresh):
                                  headers={'Content-Type': 'application/json'})
         if response.status_code != 200:
             log.warning(f'Could not register this runtime at the url {activator_url} '
-                            f'Check that the activator is running at that address.')
+                        f'Check that the activator is running at that address.')
     except requests.ConnectionError as err:
         log.warning(f'Could not connect to remote activator at {activator_url} Error: {err}')
 
@@ -137,6 +137,7 @@ def get_endpoint(naan, name, version, endpoint):
 
 @app.route('/register', methods=['GET'])
 def register():
+    log.info(f'Registering and requesting refresh with activator at address: {activator_url}')
     register_with_activator(True)
     return {"Registered with": activator_url}
 
