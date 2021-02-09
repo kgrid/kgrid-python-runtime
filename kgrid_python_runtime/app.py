@@ -1,4 +1,5 @@
 from datetime import datetime
+from json import JSONDecodeError
 from os import getenv, makedirs, path
 import json
 import threading
@@ -158,17 +159,24 @@ def make_serializable_endpoint(element):
 @app.route('/<endpoint_key>', methods=['POST'])
 def execute_endpoint(endpoint_key):
     data = request.get_data()
+    try:
+        endpoint = endpoint_context.endpoints[endpoint_key]
+    except KeyError:
+        raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
     if request.content_type == 'application/json':
         try:
-            result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
-        except KeyError:
-            raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
+            result = endpoint['function'](request.json)
+        except KeyError as ke:
+            raise KeyError(f'Missing required key in request body: {ke}')
     else:
         try:
-            result = endpoint_context.endpoints[endpoint_key]['function'](data.decode("UTF-8"))
-        except KeyError:
-            raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
-
+            decoded_data = data.decode("UTF-8")
+            json_data = json.loads(decoded_data)
+            result = endpoint['function'](json_data)
+        except KeyError as ke:
+            raise KeyError(f'Missing required key in request body: {ke}')
+        except JSONDecodeError as ex:
+            raise SyntaxError(f'Could not decode request body as json: {data}')
     return {'result': result}
 
 
