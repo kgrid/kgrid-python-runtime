@@ -328,6 +328,7 @@ def runserver():
     if heart_rate >= 5:
         log.debug(f'Starting heart beat at every {heart_rate} seconds')
         heartbeat_thread = threading.Thread(target=start_heart)
+        heartbeat_thread.daemon = True
         heartbeat_thread.start()
     app.run(port=app_port, host='0.0.0.0')
 
