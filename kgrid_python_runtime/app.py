@@ -1,4 +1,5 @@
 from datetime import datetime
+from json import JSONDecodeError
 from os import getenv, makedirs, path
 import json
 import threading
@@ -10,15 +11,34 @@ import subprocess
 import requests
 import logging
 from flask import Flask, request, jsonify
+from flask_api import status
 from flask_script import Manager
 import pyshelf  # must be imported to activate and execute KOs
 from kgrid_python_runtime.context import Context
 from kgrid_python_runtime.exceptions import error_handlers
 
+PYSHELF_DIRECTORY = 'pyshelf'
 PYTHON = 'python'
+is_debug_mode = str(getenv('DEBUG', False))
+app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
+heart_rate = int(getenv('KGRID_PROXY_HEARTBEAT_INTERVAL', 30))
+activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
+python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
 
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+log = logging.getLogger('logger')
+
+werkzueg_logger = logging.getLogger('werkzeug')
+werkzueg_logger.setLevel(logging.ERROR)
+stream_handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s")
+if is_debug_mode.lower() == 'true':
+    log.setLevel(logging.DEBUG)
+    stream_handler.setLevel(logging.DEBUG)
+else:
+    log.setLevel(logging.INFO)
+    stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(formatter)
+log.addHandler(stream_handler)
 
 this_dir = path.dirname(path.realpath(__file__))
 with open(path.join(this_dir, 'VERSION')) as version_file:
@@ -28,24 +48,15 @@ endpoint_context = Context()
 
 app = Flask(__name__)
 app.register_blueprint(error_handlers)
-app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
+
 if getenv('PORT') is not None:
     app_port = int(getenv('PORT'))
-activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
-python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
-
-
-def get_pyshelf_dir():
-    if 'TEST_SHELF_PARENT' in app.config:
-        return f'{app.config["TEST_SHELF_PARENT"]}pyshelf/'
-    else:
-        return 'pyshelf/'
 
 
 def setup_app():
     time.sleep(3)
-    print(f'Kgrid Activator URL is: {activator_url}')
-    print(f'Python Runtime URL is: {python_runtime_url}')
+    log.info(f'Kgrid Activator URL is: {activator_url}')
+    log.info(f'Python Runtime URL is: {python_runtime_url}')
     if path.isfile('context.json'):
         with open('context.json') as context_json:
             endpoint_context.endpoints = json.load(context_json)
@@ -55,14 +66,19 @@ def setup_app():
             function_name = endpoint['function_name']
             checksum = endpoint['checksum']
             uri = endpoint['id']
-            package_name = 'pyshelf.' + hash_key + '.' + entry_name
-            activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
+            package_name = f'{PYSHELF_DIRECTORY}.{hash_key}.{entry_name}'
+            activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
 
-    register_with_activator()
+    register_with_activator(True)
 
 
-def register_with_activator():
-    registration_body = {'engine': PYTHON, 'version': version, 'url': python_runtime_url}
+def register_with_activator(request_refresh):
+    registration_body = {
+        'engine': PYTHON,
+        'version': version,
+        'url': python_runtime_url,
+        'forceUpdate': request_refresh
+    }
     global activator_url
     try:
         if activator_url.endswith('/'):
@@ -70,12 +86,10 @@ def register_with_activator():
         response = requests.post(activator_url + '/proxy/environments', data=json.dumps(registration_body),
                                  headers={'Content-Type': 'application/json'})
         if response.status_code != 200:
-            print(f'Could not register this runtime at the url {activator_url} '
-                  f'Check that the activator is running at that address.')
-        else:
-            requests.get(activator_url + '/activate/python')
+            log.warning(f'Could not register this runtime at the url {activator_url} '
+                        f'Check that the activator is running at that address.')
     except requests.ConnectionError as err:
-        print(f'Could not connect to remote activator at {activator_url} Error: {err}')
+        log.warning(f'Could not connect to remote activator at {activator_url} Error: {err}')
 
 
 @app.route('/', methods=['GET'])
@@ -112,26 +126,27 @@ def endpoint_list():
     writeable_endpoints = []
     endpoints = endpoint_context.endpoints.items()
     for element in endpoints:
-        endpoint = make_serializeable_endpoint(element[1])
+        endpoint = make_serializable_endpoint(element[1])
         writeable_endpoints.append(endpoint)
     return jsonify(writeable_endpoints)
 
 
 @app.route('/endpoints/<naan>/<name>/<version>/<endpoint>', methods=['GET'])
-def endpoint(naan, name, version, endpoint):
+def get_endpoint(naan, name, version, endpoint):
     hash_key = endpoint_context.hash_uri(f'{naan}/{name}/{version}/{endpoint}')
     element = endpoint_context.endpoints[hash_key]
-    endpoint = make_serializeable_endpoint(element)
+    endpoint = make_serializable_endpoint(element)
     return jsonify(endpoint)
 
 
 @app.route('/register', methods=['GET'])
 def register():
-    register_with_activator()
+    log.info(f'Registering and requesting refresh with activator at address: {activator_url}')
+    register_with_activator(True)
     return {"Registered with": activator_url}
 
 
-def make_serializeable_endpoint(element):
+def make_serializable_endpoint(element):
     serializable_endpoint = dict(element)
     if serializable_endpoint['url'] is None:
         del serializable_endpoint['url']
@@ -144,32 +159,43 @@ def make_serializeable_endpoint(element):
 @app.route('/<endpoint_key>', methods=['POST'])
 def execute_endpoint(endpoint_key):
     data = request.get_data()
+    try:
+        endpoint = endpoint_context.endpoints[endpoint_key]
+    except KeyError:
+        raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
     if request.content_type == 'application/json':
         try:
-            result = endpoint_context.endpoints[endpoint_key]['function'](request.json)
-        except KeyError:
-            raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
+            result = endpoint['function'](request.json)
+        except KeyError as ke:
+            raise KeyError(f'Missing required key in request body: {ke}')
     else:
         try:
-            result = endpoint_context.endpoints[endpoint_key]['function'](data.decode("UTF-8"))
-        except KeyError:
-            raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
-
+            decoded_data = data.decode("UTF-8")
+            json_data = json.loads(decoded_data)
+            result = endpoint['function'](json_data)
+        except KeyError as ke:
+            raise KeyError(f'Missing required key in request body: {ke}')
+        except JSONDecodeError as ex:
+            raise SyntaxError(f'Could not decode request body as json: {data}')
     return {'result': result}
 
 
 def activate_from_request(activation_request):
     request_json = activation_request.json
-    print(f'activator sent over json in activation request {request_json}')
-    hash_key = copy_artifacts_to_shelf(activation_request)
+    log.debug(f'activator sent over json in activation request {request_json}')
+    hash_key = get_hash_key(activation_request)
     entry_name = request_json['entry'].rsplit('.', 2)[0].replace('/', '.')
-    package_name = 'pyshelf.' + hash_key + '.' + entry_name
+    package_name = f'{PYSHELF_DIRECTORY}.{hash_key}.{entry_name}'
     function_name = request_json['function']
     uri = request_json['uri']
     if 'checksum' in request_json:
         checksum = request_json['checksum']
     else:
         checksum = None
+    if hash_key not in endpoint_context.endpoints:
+        endpoint_context.endpoints[hash_key] = {'is_processing': True}
+        copy_artifacts_to_shelf(activation_request)
+        return activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
     if getenv('KGRID_PYTHON_CACHE_STRATEGY') == 'always' and hash_key in endpoint_context.endpoints:
         return {'baseUrl': python_runtime_url, 'url': endpoint_context.endpoints[hash_key]['url'],
                 "activated": endpoint_context.endpoints[hash_key]['activated'],
@@ -180,14 +206,24 @@ def activate_from_request(activation_request):
         return {'baseUrl': python_runtime_url, 'url': endpoint_context.endpoints[hash_key]['url'],
                 "activated": endpoint_context.endpoints[hash_key]['activated'],
                 "status": endpoint_context.endpoints[hash_key]['status'], "id": uri, 'uri': hash_key}
+    elif endpoint_context.endpoints[hash_key]['is_processing']:
+        log.debug(f'Endpoint {hash_key} is being processed already, try again later.')
+        return ({'baseUrl': python_runtime_url, 'url': endpoint_context.endpoints[hash_key]['url'],
+                 "activated": endpoint_context.endpoints[hash_key]['activated'],
+                 "status": 'Endpoint is in processing, try again later.', "id": uri, 'uri': hash_key},
+                status.HTTP_503_SERVICE_UNAVAILABLE)
     else:
-        return activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
+        log.debug(f'processing endpoint: {hash_key}.')
+        copy_artifacts_to_shelf(activation_request)
+        endpoint_context.endpoints[hash_key]['is_processing'] = True
+        return activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
 
 
-def activate_existing_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum):
+def activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum):
+    log.debug(f'Activating endpoint: {uri}')
     if package_name in sys.modules:
         for module in list(sys.modules):
-            if module.startswith('pyshelf.' + hash_key):
+            if module.startswith(f'{PYSHELF_DIRECTORY}.{hash_key}'):
                 importlib.reload(sys.modules[module])
     else:
         import_package(hash_key, package_name)
@@ -203,14 +239,24 @@ def activate_existing_endpoint(package_name, hash_key, entry_name, function_name
                                  status, checksum)
     response = {'baseUrl': python_runtime_url, 'url': url, "activated": activated_time, "status": status,
                 "id": uri, 'uri': hash_key}
+    endpoint_context.endpoints[hash_key]['is_processing'] = False
     return response
 
 
 def insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
-                                 status, checksum):
-    endpoint_context.endpoints[hash_key] = {'url': url, 'path': package_name, 'function': function, 'function_name':
-        function_name, 'entry': entry_name, "id": uri, "activated": activated_time,
-                                            "status": status, "checksum": checksum}
+                                 endpoint_status, checksum):
+    endpoint_context.endpoints[hash_key] = {
+        'url': url,
+        'path': package_name,
+        'function': function,
+        'function_name': function_name,
+        'entry': entry_name,
+        'id': uri,
+        'activated': activated_time,
+        'status': endpoint_status,
+        'checksum': checksum,
+        'is_processing': True
+    }
 
     if 'TEST_CONTEXT' in app.config:
         context_file = app.config['TEST_CONTEXT']
@@ -221,7 +267,7 @@ def insert_endpoint_into_context(hash_key, activated_time, entry_name, function,
 
 
 def import_package(hash_key, package_name):
-    dependency_requirements = get_pyshelf_dir() + hash_key + '/requirements.txt'
+    dependency_requirements = f'{PYSHELF_DIRECTORY}/{hash_key}/requirements.txt'
     if path.exists(dependency_requirements):
         subprocess.check_call([
             sys.executable,
@@ -234,19 +280,23 @@ def import_package(hash_key, package_name):
         importlib.import_module(package_name)
     except SyntaxError as e:
         insert_endpoint_into_context(hash_key, datetime.now(), None, None, None, None, {'uri': hash_key}, str(e))
-        shutil.rmtree(f'{get_pyshelf_dir()}/{hash_key}')
+        shutil.rmtree(f'{PYSHELF_DIRECTORY}/{hash_key}')
         raise e
 
 
-def copy_artifacts_to_shelf(activation_request):
-    pyshelf_folder = get_pyshelf_dir()
-    request_json = activation_request.json
-    hash_key = endpoint_context.hash_uri(request_json['uri'])
+def get_hash_key(req):
+    return endpoint_context.hash_uri(req.json['uri'])
 
-    if path.exists(pyshelf_folder + hash_key):
-        shutil.rmtree(pyshelf_folder + hash_key)
+
+def copy_artifacts_to_shelf(activation_request):
+    request_json = activation_request.json
+    hash_key = get_hash_key(activation_request)
+
+    endpoint_directory = f'{PYSHELF_DIRECTORY}/{hash_key}'
+    if path.exists(endpoint_directory):
+        shutil.rmtree(endpoint_directory)
     for artifact in request_json['artifact']:
-        artifact_path = pyshelf_folder + hash_key + '/' + artifact
+        artifact_path = f'{endpoint_directory}/{artifact}'
         dir_name = artifact_path.rsplit('/', 1)[0]
         if not path.isdir(dir_name):
             makedirs(dir_name)
@@ -255,16 +305,30 @@ def copy_artifacts_to_shelf(activation_request):
             for data in artifact_binary.iter_content():
                 handle.write(data)
 
-    return hash_key
-
 
 manager = Manager(app)
 
 
+def heart_beat():
+    log.debug(f'The heart hath beaten, registering with activator')
+    register_with_activator(False)
+
+
+def start_heart():
+    ticker = threading.Event()
+    while not ticker.wait(heart_rate):
+        heart_beat()
+
+
 @manager.command
 def runserver():
-    thread = threading.Thread(target=setup_app)
-    thread.start()
+    app_thread = threading.Thread(target=setup_app)
+    app_thread.start()
+
+    if heart_rate >= 5:
+        log.debug(f'Starting heart beat at every {heart_rate} seconds')
+        heartbeat_thread = threading.Thread(target=start_heart)
+        heartbeat_thread.start()
     app.run(port=app_port, host='0.0.0.0')
 
 
