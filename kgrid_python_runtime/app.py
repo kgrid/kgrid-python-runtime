@@ -18,7 +18,12 @@ from kgrid_python_runtime.exceptions import error_handlers
 
 PYSHELF_DIRECTORY = 'pyshelf'
 PYTHON = 'python'
-is_debug_mode = getenv('DEBUG', False)
+is_debug_mode = str(getenv('DEBUG', False))
+app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
+heart_rate = int(getenv('KGRID_PROXY_HEARTBEAT_INTERVAL', 30))
+activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
+python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
+
 log = logging.getLogger('logger')
 
 werkzueg_logger = logging.getLogger('werkzeug')
@@ -42,11 +47,9 @@ endpoint_context = Context()
 
 app = Flask(__name__)
 app.register_blueprint(error_handlers)
-app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
+
 if getenv('PORT') is not None:
     app_port = int(getenv('PORT'))
-activator_url = getenv('KGRID_PROXY_ADAPTER_URL', 'http://localhost:8080')
-python_runtime_url = getenv('KGRID_PYTHON_ENV_URL', f'http://localhost:{app_port}')
 
 
 def setup_app():
@@ -304,20 +307,20 @@ def heart_beat():
 
 
 def start_heart():
-    heart_rate = int(getenv('KGRID_PROXY_HEARTBEAT_INTERVAL', 30))
-    log.debug(f'Starting heart beat at every {heart_rate} seconds')
-    if heart_rate >= 5:
-        ticker = threading.Event()
-        while not ticker.wait(heart_rate):
-            heart_beat()
+    ticker = threading.Event()
+    while not ticker.wait(heart_rate):
+        heart_beat()
 
 
 @manager.command
 def runserver():
     app_thread = threading.Thread(target=setup_app)
-    heartbeat_thread = threading.Thread(target=start_heart)
     app_thread.start()
-    heartbeat_thread.start()
+
+    if heart_rate >= 5:
+        log.debug(f'Starting heart beat at every {heart_rate} seconds')
+        heartbeat_thread = threading.Thread(target=start_heart)
+        heartbeat_thread.start()
     app.run(port=app_port, host='0.0.0.0', debug=is_debug_mode)
 
 
