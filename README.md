@@ -139,6 +139,51 @@ Example (Ubuntu): `export PYTHONPATH=~/Projects/kgrid-python-runtime`
 
 Run `python kgrid_python_runtime/app.py runserver` from the top level of the project.
 
+
+### Build the image of kgrid-python-runtime
+
+Use the following command to build the image:
+```
+ sudo docker build -t kgrid/pythonruntime .
+```
+
+### Push to DockerHub
+Use the following command to push the image:
+```
+ sudo docker push kgrid/pythonruntime:#.#.#
+```
+
+### Run the image locally
+Use the following command to run the image on Linux:
+```
+ sudo docker run --network host kgrid/pythonruntime
+```
+
+Use the following command to run the image on Windows:
+```
+ docker run -it -p :5000:5000 -e KGRID_PROXY_ADAPTER_URL=http://host.docker.internal:8080 kgrid/pythonruntime
+```
+
+### Pushing an image directly to Heroku
+1. Log in to Heroku by	`heroku login`
+
+1. Log in to Heroku Container Registry by `heroku container:login`
+
+1. Tag the image with (change #.#.# to version)
+   ```bash
+   docker tag <image> registry.heroku.com/<app>/web
+   ```
+   `<image>` will be `kgrid/pythonruntime:###`
+
+1. Push to Heroku:
+   ```bash
+   docker push registry.heroku.com/<app>/web
+   ```
+1. Release the image so Heroku can start the deployment process
+   ```bash
+   heroku container:release web -a <app>
+   ```
+
     
 ## Important Notes
 - Editing the cache directly from the runtime's shelf will

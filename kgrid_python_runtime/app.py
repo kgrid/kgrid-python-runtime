@@ -11,7 +11,6 @@ import subprocess
 import requests
 import logging
 from flask import Flask, request, jsonify
-from flask_api import status
 from flask_script import Manager
 import pyshelf  # must be imported to activate and execute KOs
 from kgrid_python_runtime.context import Context
@@ -211,7 +210,7 @@ def activate_from_request(activation_request):
         return ({'baseUrl': python_runtime_url, 'url': endpoint_context.endpoints[hash_key]['url'],
                  "activated": endpoint_context.endpoints[hash_key]['activated'],
                  "status": 'Endpoint is in processing, try again later.', "id": uri, 'uri': hash_key},
-                status.HTTP_503_SERVICE_UNAVAILABLE)
+                503)
     else:
         log.debug(f'processing endpoint: {hash_key}.')
         copy_artifacts_to_shelf(activation_request)
