@@ -5,11 +5,27 @@ A KGrid runtime for Knowledge Objects in a native python environment that connec
 - [Python](https://www.python.org/downloads/) 3.8 or higher
 - [pip](https://pip.pypa.io/en/stable/installing/)
 
-## Installation:
+## Installation from the python package:
 - Run `python -m pip install kgrid-python-runtime` to download the latest package
 - Create a directory called `pyshelf` in the directory the runtime will be running from.
 - Run `python -m kgrid_python_runtime` to start the runtime
 
+
+## Installation from an image:
+
+- Download the latest image from docker hub: `docker pull kgrid/pythonruntime:#.#.#` where `#.#.#` is the latest version
+
+- Use the following command to run the image on Linux:
+```
+ sudo docker run --network host kgrid/pythonruntime
+```
+ Or
+- Use the following command to run the image on Windows:
+```
+ docker run -it -p :5000:5000 -e KGRID_PROXY_ADAPTER_URL=http://host.docker.internal:8080 kgrid/pythonruntime
+```
+
+This starts the runtime pointed to an activator running on the same system at localhost:8080
 
 ## Endpoints
 
@@ -25,7 +41,7 @@ Displays a list of the activated endpoints in the engine.
 ## Configuration:
 Set these environment variables to customize your runtime's settings.
 
-###`KGRID_PYTHON_ENV_URL`
+### `KGRID_PYTHON_ENV_URL`
 - The address of this environment that the activator will use to communicate with it. 
 - Default value: `http://localhost`
   
@@ -151,17 +167,6 @@ Use the following command to build the image:
 Use the following command to push the image:
 ```
  sudo docker push kgrid/pythonruntime:#.#.#
-```
-
-### Run the image locally
-Use the following command to run the image on Linux:
-```
- sudo docker run --network host kgrid/pythonruntime
-```
-
-Use the following command to run the image on Windows:
-```
- docker run -it -p :5000:5000 -e KGRID_PROXY_ADAPTER_URL=http://host.docker.internal:8080 kgrid/pythonruntime
 ```
 
 ### Pushing an image directly to Heroku
