@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from json import JSONDecodeError
 from os import getenv, makedirs, path
@@ -12,11 +13,18 @@ import requests
 import logging
 from flask import Flask, request, jsonify
 from flask_script import Manager
-import pyshelf  # must be imported to activate and execute KOs
+
 from kgrid_python_runtime.context import Context
 from kgrid_python_runtime.exceptions import error_handlers
 
 PYSHELF_DIRECTORY = 'pyshelf'
+
+if not path.exists(PYSHELF_DIRECTORY):
+    os.mkdir(PYSHELF_DIRECTORY)
+    print("Created pyshelf directory")
+
+import pyshelf  # must be imported to activate and execute KOs
+
 PYTHON = 'python'
 is_debug_mode = str(getenv('DEBUG', False))
 app_port = getenv('KGRID_PYTHON_ENV_PORT', 5000)
