@@ -7,7 +7,6 @@ A KGrid runtime for Knowledge Objects in a native python environment that connec
 
 ## Installation from the python package:
 - Run `python -m pip install kgrid-python-runtime` to download the latest package
-- Create a directory called `pyshelf` in the directory the runtime will be running from.
 - Run `python -m kgrid_python_runtime` to start the runtime
 
 
