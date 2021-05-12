@@ -10,6 +10,6 @@
 FROM python:3.9.4-alpine3.13
 MAINTAINER kgrid (kgrid-developers@umich.edu)
 
-RUN ["python", "-m", "pip", "install", "--no-cache-dir", "kgrid-python-runtime"]
+RUN ["python", "-m", "pip", "install", "--upgrade", "--no-cache-dir", "kgrid-python-runtime"]
 
 CMD ["python", "-m", "kgrid_python_runtime"]

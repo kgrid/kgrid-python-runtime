@@ -64,8 +64,8 @@ def setup_app():
     time.sleep(3)
     log.info(f'Kgrid Activator URL is: {activator_url}')
     log.info(f'Python Runtime URL is: {python_runtime_url}')
-    if path.isfile('context.json'):
-        with open('context.json') as context_json:
+    if path.isfile(path.join(PYSHELF_DIRECTORY, 'context.json')):
+        with open(path.join(PYSHELF_DIRECTORY, 'context.json')) as context_json:
             endpoint_context.endpoints = json.load(context_json)
         for key, endpoint in endpoint_context.endpoints.items():
             hash_key = key
@@ -268,7 +268,7 @@ def insert_endpoint_into_context(hash_key, activated_time, entry_name, function,
     if 'TEST_CONTEXT' in app.config:
         context_file = app.config['TEST_CONTEXT']
     else:
-        context_file = 'context.json'
+        context_file = path.join(PYSHELF_DIRECTORY, 'context.json')
     with open(context_file, 'w') as outfile:
         outfile.write(json.dumps(endpoint_context.endpoints, indent=4, sort_keys=True, default=str))
 
