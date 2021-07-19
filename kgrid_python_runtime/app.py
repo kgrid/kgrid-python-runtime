@@ -264,7 +264,7 @@ def import_package(hash_key, endpoint):
             if module.startswith(f'{PYSHELF_DIRECTORY}.{hash_key}'):
                 try:
                     importlib.reload(sys.modules[module])
-                except ModuleNotFoundError as e:
+                except (ModuleNotFoundError, SyntaxError) as e:
                     handle_broken_endpoint(e, endpoint, hash_key)
     else:
         dependency_requirements = f'{PYSHELF_DIRECTORY}/{hash_key}/requirements.txt'
