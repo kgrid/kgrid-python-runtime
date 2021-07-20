@@ -167,15 +167,18 @@ def execute_endpoint(endpoint_key):
     if request.content_type == 'application/json':
         try:
             result = endpoint['function'](request.json)
-        except KeyError as ke:
-            raise KeyError(f'Missing required key in request body: {ke}')
+        except KeyError as key_error:
+            raise KeyError(f'Missing required key in request body: {key_error}')
+        except TypeError as type_error:
+            raise TypeError(f'Incorrect type for argument {type_error}')
+
     else:
         try:
             decoded_data = data.decode("UTF-8")
             json_data = json.loads(decoded_data)
             result = endpoint['function'](json_data)
-        except KeyError as ke:
-            raise KeyError(f'Missing required key in request body: {ke}')
+        except KeyError as key_error:
+            raise KeyError(f'Missing required key in request body: {key_error}')
         except JSONDecodeError:
             raise SyntaxError(f'Could not decode request body as json: {data}')
     return {'result': result}
@@ -277,7 +280,7 @@ def import_package(hash_key, endpoint):
             dependency_requirements])
     try:
         importlib.import_module(endpoint['path'])
-    except (ModuleNotFoundError, SyntaxError) as e:
+    except Exception as e:
         handle_broken_endpoint(e, endpoint, hash_key)
 
 
