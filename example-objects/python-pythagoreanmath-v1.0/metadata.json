@@ -1,0 +1,14 @@
+{
+  "@id" : "python/pythagoreanmath/v1.0",
+  "@type" : "koio:KnowledgeObject",
+  "title" : "Pythagorean Theorem Python KO Example",
+  "identifier" : "ark:/python/pythagoreanmath/v1.0",
+  "version" : "v1.0",
+  "description" : "A python object that calculates the pythagorean theorem using math",
+  "contributors" : "Kgrid Team",
+  "keywords" : [ "Pythagorean", "math" ],
+  "hasServiceSpecification" : "service.yaml",
+  "hasDeploymentSpecification" : "deployment.yaml",
+  "hasPayload" : "src/pythagorean.py",
+  "@context" : [ "http://kgrid.org/koio/contexts/knowledgeobject.jsonld" ]
+}
