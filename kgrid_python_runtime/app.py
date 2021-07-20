@@ -68,13 +68,7 @@ def setup_app():
         with open(path.join(PYSHELF_DIRECTORY, 'context.json')) as context_json:
             endpoint_context.endpoints = json.load(context_json)
         for key, endpoint in endpoint_context.endpoints.items():
-            hash_key = key
-            entry_name = endpoint['entry']
-            function_name = endpoint['function_name']
-            checksum = endpoint['checksum']
-            uri = endpoint['id']
-            package_name = f'{PYSHELF_DIRECTORY}.{hash_key}.{entry_name}'
-            activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
+            activate_endpoint(key, endpoint)
 
     register_with_activator(True)
 
@@ -182,7 +176,7 @@ def execute_endpoint(endpoint_key):
             result = endpoint['function'](json_data)
         except KeyError as ke:
             raise KeyError(f'Missing required key in request body: {ke}')
-        except JSONDecodeError as ex:
+        except JSONDecodeError:
             raise SyntaxError(f'Could not decode request body as json: {data}')
     return {'result': result}
 
@@ -192,17 +186,27 @@ def activate_from_request(activation_request):
     log.debug(f'activator sent over json in activation request {request_json}')
     hash_key = get_hash_key(activation_request)
     entry_name = request_json['entry'].rsplit('.', 2)[0].replace('/', '.')
-    package_name = f'{PYSHELF_DIRECTORY}.{hash_key}.{entry_name}'
-    function_name = request_json['function']
+    checksum = get_checksum_from_request(request_json)
     uri = request_json['uri']
-    if 'checksum' in request_json:
-        checksum = request_json['checksum']
-    else:
-        checksum = None
+    endpoint = {
+        'activated': datetime.now(),
+        'entry': entry_name,
+        'function': None,
+        'function_name': request_json['function'],
+        'url': build_endpoint_url(hash_key),
+        'path': f'{PYSHELF_DIRECTORY}.{hash_key}.{entry_name}',
+        'id': uri,
+        'status': 'Processing',
+        'checksum': checksum,
+        'is_processing': True
+    }
+
     if hash_key not in endpoint_context.endpoints:
-        endpoint_context.endpoints[hash_key] = {'is_processing': True}
+        endpoint["is_processing"] = True
+        insert_endpoint_into_context(hash_key, endpoint)
         copy_artifacts_to_shelf(activation_request)
-        return activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
+        return activate_endpoint(hash_key, endpoint)
+
     if getenv('KGRID_PYTHON_CACHE_STRATEGY') == 'always' and hash_key in endpoint_context.endpoints:
         return {'baseUrl': python_runtime_url, 'url': endpoint_context.endpoints[hash_key]['url'],
                 "activated": endpoint_context.endpoints[hash_key]['activated'],
@@ -222,49 +226,30 @@ def activate_from_request(activation_request):
     else:
         log.debug(f'processing endpoint: {hash_key}.')
         copy_artifacts_to_shelf(activation_request)
-        endpoint_context.endpoints[hash_key]['is_processing'] = True
-        return activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum)
+        endpoint["is_processing"] = True
+        insert_endpoint_into_context(hash_key, endpoint)
+        return activate_endpoint(hash_key, endpoint)
 
 
-def activate_endpoint(package_name, hash_key, entry_name, function_name, uri, checksum):
-    log.debug(f'Activating endpoint: {uri}')
-    if package_name in sys.modules:
-        for module in list(sys.modules):
-            if module.startswith(f'{PYSHELF_DIRECTORY}.{hash_key}'):
-                importlib.reload(sys.modules[module])
-    else:
-        import_package(hash_key, package_name)
-
-    function = eval(f'{package_name}.{function_name}')
-    activated_time = datetime.now()
-    status = "Activated"
-    if python_runtime_url.endswith("/"):
-        url = python_runtime_url + hash_key
-    else:
-        url = python_runtime_url + "/" + hash_key
-    insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
-                                 status, checksum)
-    response = {'baseUrl': python_runtime_url, 'url': url, "activated": activated_time, "status": status,
-                "id": uri, 'uri': hash_key}
-    endpoint_context.endpoints[hash_key]['is_processing'] = False
+def activate_endpoint(hash_key, endpoint):
+    log.debug(f'Activating endpoint: {endpoint["id"]}')
+    import_package(hash_key, endpoint)
+    endpoint["function"] = eval(f'{endpoint["path"]}.{endpoint["function_name"]}')
+    endpoint["status"] = 'Activated'
+    endpoint["is_processing"] = False
+    insert_endpoint_into_context(hash_key, endpoint)
+    response = {
+        'baseUrl': python_runtime_url,
+        'url': endpoint["url"],
+        'activated': endpoint["activated"],
+        'status': "Activated",
+        'id': endpoint["id"],
+        'uri': hash_key}
     return response
 
 
-def insert_endpoint_into_context(hash_key, activated_time, entry_name, function, function_name, url, package_name, uri,
-                                 endpoint_status, checksum):
-    endpoint_context.endpoints[hash_key] = {
-        'url': url,
-        'path': package_name,
-        'function': function,
-        'function_name': function_name,
-        'entry': entry_name,
-        'id': uri,
-        'activated': activated_time,
-        'status': endpoint_status,
-        'checksum': checksum,
-        'is_processing': True
-    }
-
+def insert_endpoint_into_context(hash_key, endpoint):
+    endpoint_context.endpoints[hash_key] = endpoint
     if 'TEST_CONTEXT' in app.config:
         context_file = app.config['TEST_CONTEXT']
     else:
@@ -273,7 +258,14 @@ def insert_endpoint_into_context(hash_key, activated_time, entry_name, function,
         outfile.write(json.dumps(endpoint_context.endpoints, indent=4, sort_keys=True, default=str))
 
 
-def import_package(hash_key, package_name):
+def import_package(hash_key, endpoint):
+    if endpoint["path"] in sys.modules:
+        for module in list(sys.modules):
+            if module.startswith(f'{PYSHELF_DIRECTORY}.{hash_key}'):
+                try:
+                    del sys.modules[module]
+                except AttributeError:
+                    pass
     dependency_requirements = f'{PYSHELF_DIRECTORY}/{hash_key}/requirements.txt'
     if path.exists(dependency_requirements):
         subprocess.check_call([
@@ -284,15 +276,37 @@ def import_package(hash_key, package_name):
             '-r',
             dependency_requirements])
     try:
-        importlib.import_module(package_name)
-    except SyntaxError as e:
-        insert_endpoint_into_context(hash_key, datetime.now(), None, None, None, None, {'uri': hash_key}, str(e))
-        shutil.rmtree(f'{PYSHELF_DIRECTORY}/{hash_key}')
-        raise e
+        importlib.import_module(endpoint['path'])
+    except (ModuleNotFoundError, SyntaxError) as e:
+        handle_broken_endpoint(e, endpoint, hash_key)
+
+
+def handle_broken_endpoint(error, endpoint, hash_key):
+    endpoint['status'] = error
+    endpoint["is_processing"] = False
+    insert_endpoint_into_context(hash_key, endpoint)
+    shutil.rmtree(f'{PYSHELF_DIRECTORY}/{hash_key}')
+    raise error
 
 
 def get_hash_key(req):
     return endpoint_context.hash_uri(req.json['uri'])
+
+
+def get_checksum_from_request(request_json):
+    if 'checksum' in request_json:
+        checksum = request_json['checksum']
+    else:
+        checksum = None
+    return checksum
+
+
+def build_endpoint_url(hash_key):
+    if python_runtime_url.endswith("/"):
+        url = python_runtime_url + hash_key
+    else:
+        url = python_runtime_url + "/" + hash_key
+    return url
 
 
 def copy_artifacts_to_shelf(activation_request):
