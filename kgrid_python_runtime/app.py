@@ -263,23 +263,22 @@ def import_package(hash_key, endpoint):
         for module in list(sys.modules):
             if module.startswith(f'{PYSHELF_DIRECTORY}.{hash_key}'):
                 try:
-                    importlib.reload(sys.modules[module])
-                except (ModuleNotFoundError, SyntaxError) as e:
-                    handle_broken_endpoint(e, endpoint, hash_key)
-    else:
-        dependency_requirements = f'{PYSHELF_DIRECTORY}/{hash_key}/requirements.txt'
-        if path.exists(dependency_requirements):
-            subprocess.check_call([
-                sys.executable,
-                '-m',
-                'pip',
-                'install',
-                '-r',
-                dependency_requirements])
-        try:
-            importlib.import_module(endpoint['path'])
-        except (ModuleNotFoundError, SyntaxError) as e:
-            handle_broken_endpoint(e, endpoint, hash_key)
+                    del sys.modules[module]
+                except AttributeError:
+                    pass
+    dependency_requirements = f'{PYSHELF_DIRECTORY}/{hash_key}/requirements.txt'
+    if path.exists(dependency_requirements):
+        subprocess.check_call([
+            sys.executable,
+            '-m',
+            'pip',
+            'install',
+            '-r',
+            dependency_requirements])
+    try:
+        importlib.import_module(endpoint['path'])
+    except (ModuleNotFoundError, SyntaxError) as e:
+        handle_broken_endpoint(e, endpoint, hash_key)
 
 
 def handle_broken_endpoint(error, endpoint, hash_key):
