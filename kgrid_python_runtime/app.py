@@ -317,14 +317,17 @@ def copy_artifacts_to_shelf(activation_request):
     if path.exists(endpoint_directory):
         shutil.rmtree(endpoint_directory)
     for artifact in request_json['artifact']:
-        artifact_path = f'{endpoint_directory}/{artifact}'
-        dir_name = artifact_path.rsplit('/', 1)[0]
-        if not path.isdir(dir_name):
-            makedirs(dir_name)
         artifact_binary = requests.get(request_json['baseUrl'] + artifact, stream=True)
-        with open(artifact_path, 'wb') as handle:
-            for data in artifact_binary.iter_content():
-                handle.write(data)
+        artifact_path = f'{endpoint_directory}/{artifact}'
+        if artifact_binary.status_code == 200:
+            dir_name = artifact_path.rsplit('/', 1)[0]
+            if not path.isdir(dir_name):
+                makedirs(dir_name)
+            with open(artifact_path, 'wb') as handle:
+                for data in artifact_binary.iter_content():
+                    handle.write(data)
+        else:
+            log.warning(f'Unable to fetch artifact from: {artifact_path}')
 
 
 manager = Manager(app)
