@@ -19,22 +19,11 @@ def handle_http_exception(e):
     return response
 
 
-@error_handlers.app_errorhandler(SyntaxError)
-def handle_syntax_error(e):
-    print('Syntax Error: ' + e.msg)
-    return build_response(e, 400)
-
-
 @error_handlers.app_errorhandler(Exception)
 def handle_exception(e):
-    print('Execution error: ' + str(e))
-    return build_response(e, 400)
-
-
-@error_handlers.app_errorhandler(KeyError)
-def handle_key_error(e):
-    print('Execution error: ' + str(e))
-    return build_response(e, 400)
+    response = build_response(e, 500)
+    print(response[0])
+    return response
 
 
 def build_response(e, code):

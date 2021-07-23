@@ -165,22 +165,11 @@ def execute_endpoint(endpoint_key):
     except KeyError:
         raise KeyError(f'Could not find endpoint {endpoint_key} in python runtime.')
     if request.content_type == 'application/json':
-        try:
-            result = endpoint['function'](request.json)
-        except KeyError as key_error:
-            raise KeyError(f'Missing required key in request body: {key_error}')
-        except TypeError as type_error:
-            raise TypeError(f'Incorrect type for argument {type_error}')
-
+        result = endpoint['function'](request.json)
     else:
-        try:
-            decoded_data = data.decode("UTF-8")
-            json_data = json.loads(decoded_data)
-            result = endpoint['function'](json_data)
-        except KeyError as key_error:
-            raise KeyError(f'Missing required key in request body: {key_error}')
-        except JSONDecodeError:
-            raise SyntaxError(f'Could not decode request body as json: {data}')
+        decoded_data = data.decode("UTF-8")
+        json_data = json.loads(decoded_data)
+        result = endpoint['function'](json_data)
     return {'result': result}
 
 
