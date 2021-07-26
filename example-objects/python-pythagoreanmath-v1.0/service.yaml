@@ -1,0 +1,111 @@
+openapi: 3.0.0
+info:
+  version: '1.0'
+  title: 'Pythagorean theorem example'
+  description: 'A python object that calculates the pythagorean theorem'
+  license:
+    name: GNU General Public License v3 (GPL-3)
+    url: >-
+      https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext
+  contact:
+    name: KGrid Team
+    email: kgrid-developers@umich.edu
+    url: 'http://kgrid.org'
+servers:
+  - url: /python/pythagoreanmath
+    description: Calculates the hypotenuse or a side of a right triangle
+tags:
+  - name: KO Endpoints
+    description: Pythagorean theorem
+paths:
+  /calc-hypotenuse:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Calculate the hypotenuse of a right triangle
+      operationId: calc-hypotenuse
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/hypotenuse'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+  /calc-side:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Calculate the side of a right triangle.
+      operationId: calc-side
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/side'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+
+components:
+  parameters:
+    apiversion:
+      in: query
+      required: false
+      name: v
+      schema:
+        type: string
+        default:
+          $ref: '#/info/version'
+  schemas:
+    hypotenuse:
+      required:
+        - a
+        - b
+      properties:
+        a:
+          type: integer
+          example: 3
+        b:
+          type: integer
+          example: 4
+    side:
+      required:
+        - a
+        - c
+      properties:
+        a:
+          type: integer
+          example: 3
+        c:
+          type: integer
+          example: 5
+

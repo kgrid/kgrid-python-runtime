@@ -1,0 +1,8 @@
+/trim-zeros:
+  post:
+    artifact:
+      - src/trim_zeros.py
+      - requirements.txt
+    engine: python
+    entry: src/trim_zeros.py
+    function: trim_zeros

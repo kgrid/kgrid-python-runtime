@@ -1,0 +1,67 @@
+openapi: 3.0.0
+info:
+  version: '1.0'
+  title: 'Pythagorean theorem example'
+  description: 'A python object that calculates the pythagorean theorem'
+  license:
+    name: GNU General Public License v3 (GPL-3)
+    url: >-
+      https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext
+  contact:
+    name: KGrid Team
+    email: kgrid-developers@umich.edu
+    url: 'http://kgrid.org'
+servers:
+  - url: /python/trimzeros
+    description: Calculates the hypotenuse or a side of a right triangle
+tags:
+  - name: KO Endpoints
+    description: Trim zeros from array
+paths:
+  /trim-zeros:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Trim zeros from array
+      operationId: trim-zeroes
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/array'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+components:
+  parameters:
+    apiversion:
+      in: query
+      required: false
+      name: v
+      schema:
+        type: string
+        default:
+          $ref: '#/info/version'
+  schemas:
+    array:
+      required:
+        - array
+      properties:
+        array:
+          type: array
+          example: [3,0,4,5,0,0,10,2100,0,1]
+

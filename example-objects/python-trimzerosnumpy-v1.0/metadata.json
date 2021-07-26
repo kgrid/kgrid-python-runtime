@@ -1,0 +1,14 @@
+{
+  "@id" : "python/trimzerosnumpy/v1.0",
+  "@type" : "koio:KnowledgeObject",
+  "title" : "Trim Zeros",
+  "identifier" : "ark:/python/trimzerosnumpy/v1.0",
+  "version" : "v1.0",
+  "description" : "A python object that removes zeros from the start and end of an array using numpy",
+  "contributors" : "Kgrid Team",
+  "keywords" : [ "trim", "numpy" ],
+  "hasServiceSpecification" : "service.yaml",
+  "hasDeploymentSpecification" : "deployment.yaml",
+  "hasPayload" : "src/trim_zeros.py",
+  "@context" : [ "http://kgrid.org/koio/contexts/knowledgeobject.jsonld" ]
+}

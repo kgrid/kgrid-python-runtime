@@ -1,0 +1,15 @@
+/calc-hypotenuse:
+  post:
+    artifact:
+      - src/pythagorean.py
+    engine: python
+    entry: src/pythagorean.py
+    function: calculate_hypotenuse
+
+/calc-side:
+  post:
+    artifact:
+      - src/pythagorean.py
+    engine: python
+    entry: src/pythagorean.py
+    function: calculate_side
