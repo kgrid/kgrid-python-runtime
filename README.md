@@ -140,10 +140,11 @@ other-package-name=1.3.5
 third-package-name=1.5.4
 ```
 
+Right now the python runtime only supports requirements.txt using pip, see the [requirements.txt documentation](https://pip.pypa.io/en/stable/user_guide/).
+
 That's it! as long as the payload is written in valid python, 
 and the object is built to the spec, you're ready to go.
-An example python object can be found in the example collection:
-[python/simple/v1.0](https://github.com/kgrid-objects/example-collection/releases/latest/download/python-simple-v1.0.zip)
+Example python objects can be found in the [example collection](https://github.com/kgrid-objects/example-collection/) or in the example-objects directory in this repository.
 
 
 # For Developers
