@@ -1,0 +1,47 @@
+/numinput:
+  post:
+    artifact:
+      - src/io.py
+    engine: python
+    entry: src/io.py
+    function: input_number
+
+/listinput:
+  post:
+    artifact:
+      - src/io.py
+    engine: python
+    entry: src/io.py
+    function: input_list
+
+/dictinput:
+  post:
+    artifact:
+      - src/io.py
+    engine: python
+    entry: src/io.py
+    function: input_dict
+
+/numoutput:
+  post:
+    artifact:
+      - src/io.py
+    engine: python
+    entry: src/io.py
+    function: output_number
+
+/listoutput:
+  post:
+    artifact:
+      - src/io.py
+    engine: python
+    entry: src/io.py
+    function: output_list
+
+/dictoutput:
+  post:
+    artifact:
+      - src/io.py
+    engine: python
+    entry: src/io.py
+    function: output_dict

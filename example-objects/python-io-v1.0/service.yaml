@@ -1,0 +1,220 @@
+openapi: 3.0.0
+info:
+  version: '1.0'
+  title: 'Input/output example'
+  description: 'A python object that demonstrates different input/output techniques'
+  license:
+    name: GNU General Public License v3 (GPL-3)
+    url: >-
+      https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext
+  contact:
+    name: KGrid Team
+    email: kgrid-developers@umich.edu
+    url: 'http://kgrid.org'
+servers:
+  - url: /python/io
+    description: Calculates the hypotenuse or a side of a right triangle
+tags:
+  - name: KO Endpoints
+    description: Pythagorean theorem
+paths:
+  /numinput:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Takes a number input
+      operationId: num-input
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/numinput'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+  /listinput:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Takes a list input
+      operationId: list-input
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/listinput'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+  /dictinput:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Takes a dict input
+      operationId: dict-input
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dictinput'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+  /numoutput:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Outputs a number
+      operationId: num-output
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/numoutput'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+  /listoutput:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Outputs a list
+      operationId: list-output
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/listoutput'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+  /dictoutput:
+    post:
+      parameters:
+        - $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/parameters/apiversion'
+      tags:
+        - KO Endpoints
+      description: Outputs a dict
+      operationId: dict-output
+      requestBody:
+        description: inputs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dictoutput'
+      responses:
+        '200':
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericresponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: 'https://demo.kgrid.org/schemas/openapischemas.yaml#/components/schemas/genericerror'
+
+components:
+  parameters:
+    apiversion:
+      in: query
+      required: false
+      name: v
+      schema:
+        type: string
+        default:
+          $ref: '#/info/version'
+  schemas:
+    numinput:
+      type: number
+      example: 3
+    listinput:
+      type: array
+      items:
+        type: integer
+        example: ["a", "b", "c"]
+    dictinput:
+      type: object
+      example: { "this": "dict", "name": "Deb" }
+    numoutput:
+      type: object
+      example: {}
+    listoutput:
+      type: object
+      example: { }
+    dictoutput:
+      type: object
+      example: { }
