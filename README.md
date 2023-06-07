@@ -158,14 +158,13 @@ Run `python kgrid_python_runtime/app.py runserver` from the top level of the pro
 ## To package the python runtime
 Don't forget to update the version file.
 
-To create the .whl file use 
+The following command will build both the .whl file and the .tar.gz 
 
-```python -m build –wheel```  
+```python -m build```  
 
-To create the .tar.gz file use
+For more information: https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
 
-```python -m build –sdist```
-
+Note that the packaging did not work on Linux on Windows (failed to copy the version file)
 
 ## Important Notes
 - Editing the cache directly from the runtime's shelf will
