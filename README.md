@@ -149,11 +149,23 @@ Example python objects can be found in the [example collection](https://github.c
 
 # For Developers
 ## To run the app:
-Clone this project and set the environment variable: `PYTHONPATH` to the project root.
+Clone this project and set the environment variable: `PYTHONPATH` to the project root. (For now the python runtime uses both the current working directory and the python path to create and manage KO storage.)
 
 Example (Ubuntu): `export PYTHONPATH=~/Projects/kgrid-python-runtime`
 
 Run `python kgrid_python_runtime/app.py runserver` from the top level of the project.
+
+## To package the python runtime
+Don't forget to update the version file.
+
+To create the .whl file use 
+
+```python -m build –wheel```  
+
+To create the .tar.gz file use
+
+```python -m build –sdist```
+
 
 ## Important Notes
 - Editing the cache directly from the runtime's shelf will
