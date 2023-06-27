@@ -2,7 +2,7 @@
 A KGrid runtime for Knowledge Objects in a native python environment that connects to an activator using the proxy adapter.
 
 ## Prerequisites:
-- [Python](https://www.python.org/downloads/) 3.8 or higher
+- [Python](https://www.python.org/downloads/) 3.11 or higher
 - [pip](https://pip.pypa.io/en/stable/installing/)
 
 ## Installation from the python package:
@@ -11,6 +11,7 @@ A KGrid runtime for Knowledge Objects in a native python environment that connec
 
 
 ## Installation from an image:
+Note: not currently being used. Docker file has been updated to the latest python version but not tested or published.
 
 - Download the latest image from docker hub: `docker pull kgrid/kgrid-python-runtime`
 

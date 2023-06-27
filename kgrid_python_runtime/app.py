@@ -12,7 +12,7 @@ import subprocess
 import requests
 import logging
 from flask import Flask, request, jsonify
-from flask_script import Manager
+import typer
 
 from kgrid_python_runtime.context import Context
 from kgrid_python_runtime.exceptions import error_handlers
@@ -323,7 +323,7 @@ def copy_artifacts_to_shelf(activation_request):
             log.warning(f'Unable to fetch artifact from: {artifact_path}')
 
 
-manager = Manager(app)
+app1 = typer.Typer()
 
 
 def heart_beat():
@@ -337,7 +337,7 @@ def start_heart():
         heart_beat()
 
 
-@manager.command
+@app1.command()
 def runserver():
     log.info("Current version is " + metadata.version("kgrid-python-runtime"))
     app_thread = threading.Thread(target=setup_app)
@@ -352,4 +352,4 @@ def runserver():
 
 
 if __name__ == '__main__':
-    manager.run()
+    app1()

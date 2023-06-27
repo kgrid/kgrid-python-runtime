@@ -34,7 +34,7 @@ setuptools.setup(
         "Natural Language :: English",
         "Topic :: Scientific/Engineering :: Medical Science Apps."
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.11',
     install_requires=install_requires,
     include_package_data=True
 )
