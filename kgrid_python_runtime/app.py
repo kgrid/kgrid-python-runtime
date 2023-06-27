@@ -16,7 +16,7 @@ import typer
 
 from kgrid_python_runtime.context import Context
 from kgrid_python_runtime.exceptions import error_handlers
-from importlib import metadata 
+#from importlib import metadata 
 
 PYSHELF_DIRECTORY = 'pyshelf'
 
@@ -339,7 +339,7 @@ def start_heart():
 
 @app1.command()
 def runserver():
-    log.info("Current version is " + metadata.version("kgrid-python-runtime"))
+    #log.info("Current version is " + metadata.version("kgrid-python-runtime"))
     app_thread = threading.Thread(target=setup_app)
     app_thread.start()
 
