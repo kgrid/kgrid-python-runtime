@@ -1,1 +1,2 @@
 include kgrid_python_runtime/VERSION
+include requirements.txt
